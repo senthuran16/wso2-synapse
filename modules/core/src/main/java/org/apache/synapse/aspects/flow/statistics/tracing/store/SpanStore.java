@@ -16,7 +16,7 @@ public class SpanStore {
     private final ReentrantLock LOCK = new ReentrantLock(true);
 
     private SpanWrapper outerLevelSpan;
-    private Map<String, SpanWrapper> activeSpans;
+    private Map<SpanId, SpanWrapper> activeSpans;
     private List<StackedSequenceInfo> stackedSequences;
     private Stack<SpanWrapper> eligibleAlternativeParents;
 
@@ -30,13 +30,16 @@ public class SpanStore {
 
     // Active spans related
 
-    public Map<String, SpanWrapper> getActiveSpans() {
+    public Map<SpanId, SpanWrapper> getActiveSpans() {
         return activeSpans;
     }
 
-    public synchronized SpanWrapper addActiveSpan(String spanId, Span activeSpan, StatisticDataUnit statisticDataUnit,
+    public synchronized SpanWrapper addActiveSpan(Span activeSpan, StatisticDataUnit statisticDataUnit,
                                                   MessageContext synCtx) {
-        SpanWrapper spanWrapper = createActiveSpanWrapper(spanId, activeSpan, statisticDataUnit, synCtx);
+        SpanId spanId = new SpanId(statisticDataUnit);
+        SpanWrapper spanWrapper = createActiveSpanWrapper(
+                String.valueOf(spanId.getIndex()), // TODO remove this parameter when not necessary
+                activeSpan, statisticDataUnit, synCtx);
         activeSpans.put(spanId, spanWrapper);
 
         if (spanWrapper.getStatisticDataUnit().isFlowContinuableMediator()) {
@@ -50,19 +53,55 @@ public class SpanStore {
         return new SpanWrapper(spanId, activeSpan, statisticDataUnit, true);
     }
 
-    public synchronized void finishActiveSpan(String spanWrapperId, BasicStatisticDataUnit basicStatisticDataUnit) {
-        SpanWrapper spanWrapper = getSpanWrapperById(spanWrapperId);
-        if (spanWrapper != null && spanWrapper.isCloseable() && spanWrapper.getSpan() != null) {
-            if (spanWrapper.getStatisticDataUnit() != null) {
-                setSpanTags(spanWrapper, basicStatisticDataUnit);
+    public synchronized void finishActiveSpan(String spanWrapperId,
+                                              BasicStatisticDataUnit basicStatisticDataUnit,
+                                              String componentName) {
+        if (basicStatisticDataUnit instanceof StatisticDataUnit) {
+            // Name can be extracted from the basicStatisticUnit
+            SpanWrapper spanWrapper = getSpanWrapperByStatisticDataUnit((StatisticDataUnit) basicStatisticDataUnit);
+            if (spanWrapper != null && spanWrapper.isCloseable() && spanWrapper.getSpan() != null) {
+                if (spanWrapper.getStatisticDataUnit() != null) {
+                    setSpanTags(spanWrapper, basicStatisticDataUnit);
+                }
+                spanWrapper.getSpan().finish();
             }
-            spanWrapper.getSpan().finish();
+        } else {
+            if (componentName != null) {
+                SpanWrapper spanWrapper = getSpanWrapperByIdAndName(spanWrapperId, componentName);
+                if (spanWrapper != null && spanWrapper.isCloseable() && spanWrapper.getSpan() != null) {
+                    if (spanWrapper.getStatisticDataUnit() != null) {
+                        setSpanTags(spanWrapper, basicStatisticDataUnit);
+                    }
+                    spanWrapper.getSpan().finish();
+                }
+            } else {
+                // TODO handle
+            }
         }
     }
 
-    private SpanWrapper getSpanWrapperById(String spanWrapperId) {
-        for (Map.Entry<String, SpanWrapper> spanWrapperEntry : activeSpans.entrySet()) {
-            if (spanWrapperEntry.getKey().equals(spanWrapperId)) {
+    private SpanWrapper getSpanWrapperByStatisticDataUnit(StatisticDataUnit statisticDataUnit) {
+        SpanId spanId = new SpanId(statisticDataUnit);
+        return getSpanWrapperBySpanId(spanId);
+    }
+
+    private SpanWrapper getSpanWrapperByIdAndName(String spanWrapperId, String componentName) {
+        SpanId spanId = new SpanId(Integer.valueOf(spanWrapperId), componentName);
+        return getSpanWrapperBySpanId(spanId);
+    }
+
+    private SpanWrapper getSpanWrapperBySpanId(SpanId spanId) {
+        for (Map.Entry<SpanId, SpanWrapper> spanWrapperEntry : activeSpans.entrySet()) {
+            if (spanWrapperEntry.getKey().equals(spanId)) {
+                return spanWrapperEntry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public SpanWrapper getSpanWrapperByIdOnly(String spanWrapperId) {
+        for (Map.Entry<SpanId, SpanWrapper> spanWrapperEntry : activeSpans.entrySet()) {
+            if (String.valueOf(spanWrapperEntry.getKey().getIndex()).equals(spanWrapperId)) {
                 return spanWrapperEntry.getValue();
             }
         }
@@ -145,8 +184,8 @@ public class SpanStore {
     public synchronized void printActiveSpans() {
         System.out.println("");
         System.out.print("\t\tActive Spans (Keys): [");
-        for (String key : activeSpans.keySet()) {
-            System.out.print(key + ", ");
+        for (SpanId spanId : activeSpans.keySet()) {
+            System.out.print(spanId.getIndex() + ". " + spanId.getName() + ", ");
         }
         System.out.println("]");
         System.out.println("");

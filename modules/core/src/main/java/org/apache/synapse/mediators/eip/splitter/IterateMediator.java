@@ -42,6 +42,9 @@ import org.apache.synapse.aspects.flow.statistics.StatisticIdentityGenerator;
 import org.apache.synapse.aspects.flow.statistics.collectors.OpenEventCollector;
 import org.apache.synapse.aspects.flow.statistics.collectors.RuntimeStatisticCollector;
 import org.apache.synapse.aspects.flow.statistics.data.artifact.ArtifactHolder;
+import org.apache.synapse.aspects.flow.statistics.tracing.holder.TracingManagerHolder;
+import org.apache.synapse.aspects.flow.statistics.tracing.manager.subhandlers.IterateMediatorSubHandler;
+import org.apache.synapse.aspects.flow.statistics.tracing.manager.subhandlers.SubHandler;
 import org.apache.synapse.commons.json.JsonUtil;
 import org.apache.synapse.config.xml.SynapsePath;
 import org.apache.synapse.continuation.ContinuationStackManager;
@@ -228,6 +231,13 @@ public class IterateMediator extends AbstractMediator implements ManagedLifecycl
                 int msgCount = splitElements.size();
                 int msgNumber = 0;
 
+                // TODO senthuran added this [start]
+                System.out.println("MessageCount for Iterate Mediator: " + msgCount);
+
+                SubHandler iterateMediatorSubHandler = new IterateMediatorSubHandler(msgCount, synCtx, this);
+                TracingManagerHolder.getOpenTracingManager().addSubHandler(this, iterateMediatorSubHandler);
+                // TODO senthuran added this [end]
+
                 // iterate through the list
                 for (Object o : splitElements) {
 
@@ -267,6 +277,8 @@ public class IterateMediator extends AbstractMediator implements ManagedLifecycl
                                     "in the Iterator Mediator", e, synCtx);
                         }
                     }
+                    iterateMediatorSubHandler.finishAnIteration();
+                    iterateMediatorSubHandler.cleanupWhenFinished();
                 }
             }
 

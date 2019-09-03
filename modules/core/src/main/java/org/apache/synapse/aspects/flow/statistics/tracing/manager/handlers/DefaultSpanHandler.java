@@ -12,6 +12,7 @@ import org.apache.synapse.aspects.flow.statistics.log.StatisticsReportingEventHo
 import org.apache.synapse.aspects.flow.statistics.tracing.manager.helpers.SpanExtendingCounter;
 import org.apache.synapse.aspects.flow.statistics.tracing.manager.parentresolver.DefaultParentResolver;
 import org.apache.synapse.aspects.flow.statistics.tracing.manager.helpers.Util;
+import org.apache.synapse.aspects.flow.statistics.tracing.store.SpanId;
 import org.apache.synapse.aspects.flow.statistics.tracing.store.SpanStore;
 import org.apache.synapse.aspects.flow.statistics.tracing.store.SpanWrapper;
 import org.apache.synapse.aspects.flow.statistics.tracing.store.StackedSequenceInfo;
@@ -102,9 +103,10 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
     }
 
     @Override
-    public void handleCloseEntryEvent(BasicStatisticDataUnit basicStatisticDataUnit, MessageContext synCtx) {
+    public void handleCloseEntryEvent(BasicStatisticDataUnit basicStatisticDataUnit,
+                                      String componentName, MessageContext synCtx) {
         if (!isStackableSequence(basicStatisticDataUnit)) {
-            endSpan(basicStatisticDataUnit, synCtx);
+            endSpan(basicStatisticDataUnit, componentName, synCtx);
         }
         // Else: Will end during pop from stack
         printStateInfoForDebug(synCtx);
@@ -113,7 +115,7 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
     @Override
     public void handleCloseFlowForcefully(BasicStatisticDataUnit basicStatisticDataUnit, MessageContext synCtx) {
         if (!isStackableSequence(basicStatisticDataUnit)) {
-            endSpan(basicStatisticDataUnit, synCtx);
+            endSpan(basicStatisticDataUnit, null, synCtx); // TODO somehow find the 'componentName'
         }
         // Else: Will end during pop from stack
         printStateInfoForDebug(synCtx);
@@ -150,7 +152,10 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
             doHackyCleanup(); // TODO remove
 
             SpanWrapper outerLevelSpanWrapper = spanStore.getOuterLevelSpanWrapper();
-            spanStore.finishActiveSpan(outerLevelSpanWrapper.getId(), outerLevelSpanWrapper.getStatisticDataUnit());
+            spanStore.finishActiveSpan(
+                    outerLevelSpanWrapper.getId(),
+                    outerLevelSpanWrapper.getStatisticDataUnit(),
+                    null); // TODO componentName is ignored for now since statisticUnit can track. improve
             System.out.println("Finished Span - currentIndex: " + outerLevelSpanWrapper.getStatisticDataUnit().getCurrentIndex() +
                     ", statisticsId: " + outerLevelSpanWrapper.getStatisticDataUnit().getStatisticId());
 
@@ -170,7 +175,7 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
             setDebugSpanTags(span, "", statisticDataUnit); // TODO remove this absoluteIndex story?
 
             String spanId = stackedSequenceInfo.getSpanReferenceId();
-            SpanWrapper spanWrapper = spanStore.addActiveSpan(spanId, span, statisticDataUnit, synCtx);
+            SpanWrapper spanWrapper = spanStore.addActiveSpan(span, statisticDataUnit, synCtx);
 
             /*
             Mark the relevant span as active,
@@ -229,7 +234,7 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
         Span span = tracer.buildSpan(statisticDataUnit.getComponentName()).asChildOf(parentSpan).start();
         setDebugSpanTags(span, absoluteIndex, statisticDataUnit);
 
-        SpanWrapper spanWrapper = spanStore.addActiveSpan(absoluteIndex, span, statisticDataUnit, synCtx);
+        SpanWrapper spanWrapper = spanStore.addActiveSpan(span, statisticDataUnit, synCtx);
 
         if (isOuterLevelSpan(statisticDataUnit)) {
             spanStore.assignOuterLevelSpan(spanWrapper);
@@ -242,16 +247,28 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
         spanStore.printActiveSpans();
     }
 
-    private void endSpan(BasicStatisticDataUnit basicStatisticDataUnit, MessageContext synCtx) {
+    private void endSpan(BasicStatisticDataUnit basicStatisticDataUnit, String componentName, MessageContext synCtx) {
+        SpanWrapper spanWrapper = null;
         String spanWrapperId = Util.extractId(basicStatisticDataUnit);
-
-        SpanWrapper spanWrapper = spanStore.getActiveSpans().get(spanWrapperId);
-        if (!isOuterLevelSpan(spanWrapper.getStatisticDataUnit()) || canEndOuterLevelSpan(synCtx)) {
-            spanStore.finishActiveSpan(spanWrapperId, basicStatisticDataUnit);
-            System.out.println("Finished Span - currentIndex: " + basicStatisticDataUnit.getCurrentIndex() +
-                    ", statisticsId: " + basicStatisticDataUnit.getStatisticId());
+        if (componentName != null) { // TODO look into
+            // Close Event
+            SpanId spanId = new SpanId(Integer.valueOf(spanWrapperId), componentName);
+            spanWrapper = spanStore.getActiveSpans().get(spanId);
+        } else {
+            // Close forcefully event
+            spanWrapper = spanStore.getSpanWrapperByIdOnly(spanWrapperId);
         }
-        // Else - Absorb. Will be handled on report callback handling completion
+
+        if (spanWrapper != null) {
+            if (!isOuterLevelSpan(spanWrapper.getStatisticDataUnit()) || canEndOuterLevelSpan(synCtx)) {
+                spanStore.finishActiveSpan(spanWrapperId, basicStatisticDataUnit, componentName);
+                System.out.println("Finished Span - currentIndex: " + basicStatisticDataUnit.getCurrentIndex() +
+                        ", statisticsId: " + basicStatisticDataUnit.getStatisticId());
+            }
+            // Else - Absorb. Will be handled on report callback handling completion
+        } else {
+            System.out.println("Abnormal. Look into"); // TODO look into
+        }
 
         spanStore.printActiveSpans();
     }
@@ -294,7 +311,10 @@ public class DefaultSpanHandler implements JaegerTracingSpanHandler {
 
     private void finishStackedSequenceSpan(MessageContext synCtx, StackedSequenceInfo stackedSequenceInfo) {
         String spanWrapperId = stackedSequenceInfo.getSpanReferenceId();
-        spanStore.finishActiveSpan(spanWrapperId, null);
+        spanStore.finishActiveSpan(
+                spanWrapperId,
+                null,
+                stackedSequenceInfo.getStatisticDataUnit().getComponentName());
         System.out.println("");
         System.out.println("Finished Call Mediator Sequence Span - ComponentName: " +
                 stackedSequenceInfo.getStatisticDataUnit().getComponentName());

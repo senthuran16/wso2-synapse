@@ -4,7 +4,8 @@ import org.apache.synapse.MessageContext;
 import org.apache.synapse.aspects.flow.statistics.data.raw.BasicStatisticDataUnit;
 
 public interface CloseEventHandler {
-    void handleCloseEntryEvent(BasicStatisticDataUnit basicStatisticDataUnit, MessageContext synCtx);
+    void handleCloseEntryEvent(BasicStatisticDataUnit basicStatisticDataUnit,
+                               String componentName, MessageContext synCtx);
 
     void handleCloseFlowForcefully(BasicStatisticDataUnit basicStatisticDataUnit, MessageContext synCtx);
 

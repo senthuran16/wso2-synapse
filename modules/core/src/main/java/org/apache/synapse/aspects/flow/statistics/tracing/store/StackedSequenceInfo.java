@@ -5,7 +5,7 @@ import org.apache.synapse.aspects.flow.statistics.tracing.manager.helpers.Util;
 
 public class StackedSequenceInfo {
     private StatisticDataUnit statisticDataUnit;
-    private String spanReferenceId;
+    private String spanReferenceId; // TODO put as an integer
     private boolean isSpanActive;
 
     public StackedSequenceInfo(StatisticDataUnit statisticDataUnit) {

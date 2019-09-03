@@ -3,19 +3,20 @@ package org.apache.synapse.aspects.flow.statistics.tracing.manager.parentresolve
 import io.opentracing.Span;
 import org.apache.synapse.aspects.ComponentType;
 import org.apache.synapse.aspects.flow.statistics.data.raw.StatisticDataUnit;
+import org.apache.synapse.aspects.flow.statistics.tracing.store.SpanId;
 import org.apache.synapse.aspects.flow.statistics.tracing.store.SpanStore;
 import org.apache.synapse.aspects.flow.statistics.tracing.store.SpanWrapper;
 
 public class DefaultParentResolver implements ParentResolver {
     public static Span resolveParent(StatisticDataUnit statisticDataUnit, SpanStore spanStore) {
-        String parentId = String.valueOf(statisticDataUnit.getParentIndex());
-        SpanWrapper parent = spanStore.getActiveSpans().get(parentId);
+        SpanWrapper parent = spanStore.getSpanWrapperByIdOnly(String.valueOf(statisticDataUnit.getParentIndex()));
         if (parent == null) {
             return null;
         }
         if (isParentAcceptable(statisticDataUnit, parent.getStatisticDataUnit())) {
             System.out.println("");
-            System.out.println(statisticDataUnit.getCurrentIndex() + "'s parent is " + parentId);
+            System.out.println(statisticDataUnit.getCurrentIndex() + "'s parent is: " +
+                    parent.getSpanId().getIndex() + ". " + parent.getSpanId().getName());
             System.out.println("");
             return parent.getSpan();
         }
@@ -62,8 +63,4 @@ public class DefaultParentResolver implements ParentResolver {
 //        }
 //        return null;
 //    }
-
-    private static boolean isSpanActive(String spanId, SpanStore spanStore) {
-        return spanStore.getActiveSpans().containsKey(spanId);
-    }
 }

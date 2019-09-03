@@ -122,14 +122,15 @@ public abstract class RuntimeStatisticCollector {
      * @return true if statistics is collected in the message flow.
      */
     public static boolean shouldReportStatistic(MessageContext messageContext) {
-        if (!isStatisticsEnabled) {
-            return false;
-        }
-
-        Boolean isStatCollected =
-                (Boolean) messageContext.getProperty(StatisticsConstants.FLOW_STATISTICS_IS_COLLECTED);//todo try use one object
-        Object statID = messageContext.getProperty(StatisticsConstants.FLOW_STATISTICS_ID);
-        return (statID != null && isStatCollected != null && isStatCollected);
+        return true;
+//        if (!isStatisticsEnabled) { // TODO uncomment
+//            return false;
+//        }
+//
+//        Boolean isStatCollected =
+//                (Boolean) messageContext.getProperty(StatisticsConstants.FLOW_STATISTICS_IS_COLLECTED);//todo try use one object
+//        Object statID = messageContext.getProperty(StatisticsConstants.FLOW_STATISTICS_ID);
+//        return (statID != null && isStatCollected != null && isStatCollected);
     }
 
     /**

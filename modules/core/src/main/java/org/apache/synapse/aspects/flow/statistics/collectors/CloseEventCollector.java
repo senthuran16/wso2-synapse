@@ -77,7 +77,7 @@ public class CloseEventCollector extends RuntimeStatisticCollector {
 
 			System.out.println("MsgCtx: " + Util.getObjectReference(messageContext) + "[CLOSE_EVENT]closeEntryEvent:\n\t\t[" + currentIndex + "[Parent: "+ statisticDataUnit.getParentIndex() +"] Component - Name: " + componentName + ", Type: " + componentType);
 			TracingManagerHolder.getOpenTracingManager().getHandler().
-					handleCloseEntryEvent(statisticDataUnit, messageContext);
+					handleCloseEntryEvent(statisticDataUnit, componentName, messageContext);
 
 		}
 	}
@@ -105,7 +105,7 @@ public class CloseEventCollector extends RuntimeStatisticCollector {
 
 			System.out.println("MsgCtx: " + Util.getObjectReference(messageContext) + "[CLOSE_EVENT]closeFlowForcefully:\n\t\tComponent - CurrentIndex: " + dataUnit.getCurrentIndex());
 			TracingManagerHolder.getOpenTracingManager().getHandler()
-					.handleCloseFlowForcefully(dataUnit, messageContext);
+					.handleCloseFlowForcefully(dataUnit, messageContext); // TODO try to get the componentName
 
         }
 	}

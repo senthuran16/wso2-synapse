@@ -44,7 +44,8 @@ public class EmptySpanHandler implements JaegerTracingSpanHandler {
     }
 
     @Override
-    public void handleCloseEntryEvent(BasicStatisticDataUnit basicStatisticDataUnit, MessageContext synCtx) {
+    public void handleCloseEntryEvent(BasicStatisticDataUnit basicStatisticDataUnit,
+                                      String componentName, MessageContext synCtx) {
 
     }
 
