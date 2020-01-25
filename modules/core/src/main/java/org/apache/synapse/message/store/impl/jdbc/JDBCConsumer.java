@@ -83,8 +83,9 @@ public class JDBCConsumer implements MessageConsumer {
             }
             return msg;
         } else {
-            if (logger.isDebugEnabled()){
-                logger.debug("Trying to receive messages from a consumer that is not alive.");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Trying to receive messages from a consumer that is not alive. Id: " + getId()
+                        + ", store: " + store.getName());
             }
             return null;
         }
