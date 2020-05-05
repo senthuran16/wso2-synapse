@@ -24,6 +24,9 @@ import org.apache.axis2.transport.http.HTTPConstants;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+/**
+ * This manages session context in the message context
+ */
 public class SessionContextUtil {
 
     public static SessionContext createSessionContext(MessageContext messageContext) {
