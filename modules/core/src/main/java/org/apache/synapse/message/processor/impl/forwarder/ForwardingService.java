@@ -545,10 +545,10 @@ public class ForwardingService implements Task, ManagedLifecycle {
 	}
 
 	/**
-	 * Get a fresh copy of the original message
+	 * Get a fresh copy of the original message.
 	 *
 	 * @param messageToDispatch MessageContext containing current message
-	 * @param originalEnvelop MessageContext containing message to forward (original message)
+	 * @param originalEnvelop   MessageContext containing message to forward (original message)
 	 */
 	private void getFreshCopyOfOriginalMessage(MessageContext messageToDispatch, SOAPEnvelope originalEnvelop)
 			throws AxisFault {
@@ -562,11 +562,11 @@ public class ForwardingService implements Task, ManagedLifecycle {
 	 * Try to dispatch message to the given endpoint
 	 *
 	 * @param messageToDispatch MessageContext containing message to forward
-	 * @param endpoint                endpoint to forward message to
+	 * @param endpoint          endpoint to forward message to
 	 * @param originalEnvelop   SoapEnvelope of original message to be forwarded
 	 */
 	private void tryToDispatchToEndpoint(MessageContext messageToDispatch, Endpoint endpoint,
-										 SOAPEnvelope originalEnvelop) {
+	                                     SOAPEnvelope originalEnvelop) {
 
 		isSuccessful = false;
 		MessageContext outCtx = null;
