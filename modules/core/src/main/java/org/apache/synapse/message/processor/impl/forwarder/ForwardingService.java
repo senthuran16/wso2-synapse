@@ -589,7 +589,7 @@ public class ForwardingService implements Task, ManagedLifecycle {
 				if ("true".equals(messageToDispatch.getProperty(SynapseConstants.OUT_ONLY))) {
 					if ("true".equals(messageToDispatch.getProperty(SynapseConstants.BLOCKING_SENDER_ERROR))) {
 						throw new SynapseException("Error sending Message to the endpoint",
-								(Exception) messageToDispatch.getProperty(SynapseConstants.ERROR_EXCEPTION));
+						                           (Exception) messageToDispatch.getProperty(SynapseConstants.ERROR_EXCEPTION));
 					}
 				} else {
 					outCtx = messageToDispatch;
@@ -609,64 +609,45 @@ public class ForwardingService implements Task, ManagedLifecycle {
 			if (isResponseValidationNotRequired) {
 				isSuccessful = true;
 				onForwardSuccess(endpoint);
-			}
-
-			//there is no response
-			if (!isResponseValidationNotRequired && outCtx == null) {
-				isSuccessful = true;
-				onForwardSuccess(endpoint);
-			}
-
-			//there is a response (In message context) but failed to send with no exception thrown
-			if (!isResponseValidationNotRequired && outCtx != null
-					&& "true".equals(outCtx.getProperty(SynapseConstants.BLOCKING_SENDER_ERROR))) {
-				log.error("Blocking Sender Error " + outCtx.getProperty(SynapseConstants.ERROR_EXCEPTION));
-				isSuccessful = false;
-				onForwardFailure();
-				//invoke fault sequence of MP
-				sendThroughFaultSeq(outCtx);
 				return;
 			}
 
-			//there is a response so check on status codes
-			if (!isResponseValidationNotRequired && outCtx != null && validateResponse(outCtx)) {
+			//there is no response
+			if (outCtx == null) {
 				isSuccessful = true;
-				sendThroughReplySeq(outCtx);
 				onForwardSuccess(endpoint);
-			}
+			} else {
+				//there is a response (In message context) but failed to send with no exception thrown
+				if ("true".equals(outCtx.getProperty(SynapseConstants.BLOCKING_SENDER_ERROR))) {
+					log.error("Blocking Sender Error " + outCtx.getProperty(SynapseConstants.ERROR_EXCEPTION));
+					isSuccessful = false;
+					handleFailedInvocations(outCtx);
+				} else if (validateResponse(outCtx)) {
+					isSuccessful = true;
+					sendThroughReplySeq(outCtx);
+					onForwardSuccess(endpoint);
+				} else {
+					isSuccessful = false;
+					handleFailedInvocations(outCtx);
+				}
 
+			}
 		} catch (Exception e) {
-
 			log.error("[ " + messageProcessor.getName() + " ] Error while forwarding message to endpoint "
-					+ targetEndpoint + ".", e);
-
-			/*
-			 * TODO: need to validate the requirement for below checks. Ideally on any error forwarding should
-			 * be considered as a failure. Keeping them for backward compatibility
-			 */
-
-			if (!isResponseValidationNotRequired && outCtx != null && e instanceof SynapseException &&
-					validateResponse(outCtx)) {
-				isSuccessful = true;
-				onForwardSuccess(endpoint);
-			}
-
-			if (!isResponseValidationNotRequired && outCtx != null && "true".equals(outCtx.getProperty(
-					ForwardingProcessorConstants.BLOCKING_SENDER_ERROR))) {
-				log.error("Blocking Sender Error " + outCtx.getProperty(SynapseConstants.ERROR_EXCEPTION));
-				isSuccessful = false;
-				onForwardFailure();
-				//invoke fault sequence of MP
-				sendThroughFaultSeq(outCtx);
-			}
-
-			if (!isResponseValidationNotRequired && outCtx != null && validateResponse(outCtx)) {
-				isSuccessful = false;
-				onForwardFailure();
-				//invoke fault sequence of MP
-				sendThroughFaultSeq(outCtx);
-			}
+					          + targetEndpoint + ".", e);
+			handleFailedInvocations(outCtx);
 		}
+	}
+
+	/**
+	 * Handles invocations failed at the backend
+	 *
+	 * @param outCtx
+	 */
+	private void handleFailedInvocations(MessageContext outCtx) {
+		isSuccessful = false;
+		onForwardFailure();
+		sendThroughFaultSeq(outCtx);
 	}
 
 	/**
@@ -701,11 +682,16 @@ public class ForwardingService implements Task, ManagedLifecycle {
 	 * @return true if it is a successful invocation
 	 */
 	private boolean validateResponse(MessageContext responseMessage) {
-		boolean isSuccessful;
-		String responseSc = ((Axis2MessageContext) responseMessage).
-				getAxis2MessageContext().getProperty(SynapseConstants.HTTP_SC).toString();
+
+		String responseSc = "";
+		Object httpSc = ((Axis2MessageContext) responseMessage).
+				getAxis2MessageContext().getProperty(SynapseConstants.HTTP_SC);
+
 		// Some events where response code is null (i.e. sender socket timeout
 		// when there is no response from endpoint)
+		if (httpSc != null) {
+			responseSc = httpSc.toString();
+		}
 		int sc = 0;
 		try {
 			sc = Integer.parseInt(responseSc.trim());
