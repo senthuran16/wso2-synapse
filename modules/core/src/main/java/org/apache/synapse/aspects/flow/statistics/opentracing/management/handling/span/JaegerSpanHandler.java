@@ -156,7 +156,9 @@ public class JaegerSpanHandler implements OpenTracingSpanHandler {
             spanContext = span.context();
         }
         // Set tracing headers
-        tracer.inject(spanContext, Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(tracerSpecificCarrier));
+        if (spanContext != null) {
+            tracer.inject(spanContext, Format.Builtin.HTTP_HEADERS, new TextMapInjectAdapter(tracerSpecificCarrier));
+        }
         // Set text map key value pairs as HTTP headers
         headersMap.putAll(tracerSpecificCarrier);
 
@@ -260,12 +262,12 @@ public class JaegerSpanHandler implements OpenTracingSpanHandler {
 
         if (!Objects.equals(spanWrapper, spanStore.getOuterLevelSpanWrapper())) {
             // A non-outer level span
-            spanStore.finishSpan(spanWrapper);
+            spanStore.finishSpan(spanWrapper, synCtx);
         } else {
             // An outer level span
             if (tracingScope.isEventCollectionFinished(synCtx)) {
                 cleanupContinuationStateSequences(spanStore);
-                spanStore.finishSpan(spanWrapper);
+                spanStore.finishSpan(spanWrapper, synCtx);
                 tracingScopeManager.cleanupTracingScope(tracingScope.getTracingScopeId());
             }
             // Else - Absorb. Will be handled when all the callbacks are completed
@@ -296,7 +298,7 @@ public class JaegerSpanHandler implements OpenTracingSpanHandler {
                                                         SpanStore spanStore) {
         String spanWrapperId = continuationStateSequenceInfo.getSpanReferenceId();
         SpanWrapper spanWrapper = spanStore.getSpanWrapper(spanWrapperId);
-        spanStore.finishSpan(spanWrapper);
+        spanStore.finishSpan(spanWrapper, null);
     }
 
     @Override
@@ -328,7 +330,7 @@ public class JaegerSpanHandler implements OpenTracingSpanHandler {
             synchronized (tracingScope.getSpanStore()) {
                 cleanupContinuationStateSequences(tracingScope.getSpanStore());
                 SpanWrapper outerLevelSpanWrapper = tracingScope.getSpanStore().getOuterLevelSpanWrapper();
-                tracingScope.getSpanStore().finishSpan(outerLevelSpanWrapper);
+                tracingScope.getSpanStore().finishSpan(outerLevelSpanWrapper, messageContext);
                 tracingScopeManager.cleanupTracingScope(tracingScope.getTracingScopeId());
             }
         }
