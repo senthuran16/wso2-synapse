@@ -57,12 +57,12 @@ import org.apache.synapse.transport.passthru.config.PassThroughConfiguration;
 import org.apache.synapse.util.MediatorPropertyUtils;
 import org.apache.synapse.util.MessageHelper;
 
-import javax.mail.internet.ContentType;
-import javax.mail.internet.ParseException;
-import javax.xml.namespace.QName;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.mail.internet.ContentType;
+import javax.mail.internet.ParseException;
+import javax.xml.namespace.QName;
 
 /**
  * This is a simple client that handles both in only and in out
