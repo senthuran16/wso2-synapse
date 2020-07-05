@@ -27,6 +27,9 @@ import org.apache.synapse.JSONObjectExtensionException;
 
 import java.util.Map;
 
+/**
+ * This utility class contains various methods related to merging and manipulating JSON elements.
+ */
 public class JSONMergeUtils {
 
     public enum ConflictStrategy {
@@ -133,7 +136,7 @@ public class JSONMergeUtils {
      */
     private static void handleMergeConflict(String key, JsonObject leftObject, JsonElement leftValue, JsonElement rightValue,
                                             ConflictStrategy conflictStrategy)
-            throws JSONObjectExtensionException {
+            throws JSONObjectExtensionException, UnsupportedOperationException {
 
         switch (conflictStrategy) {
             case PREFER_FIRST_OBJECT:

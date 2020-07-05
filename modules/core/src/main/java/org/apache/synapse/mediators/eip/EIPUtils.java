@@ -37,6 +37,7 @@ import org.apache.axiom.soap.SOAPEnvelope;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.synapse.JSONObjectExtensionException;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseException;
 import org.apache.synapse.util.JSONMergeUtils;
@@ -271,7 +272,7 @@ public class EIPUtils {
      * @return JsonArray or a JsonPrimitive depending on the JsonPath response.
      */
     public static JsonElement getJSONObjectAsElement(MessageContext messageContext, SynapseJsonPath jsonPath)
-            throws JsonParseException {
+            throws JsonParseException, JSONObjectExtensionException {
         JsonParser parser = new JsonParser();
 
         Object objectList = jsonPath.evaluate(messageContext);
@@ -286,10 +287,15 @@ public class EIPUtils {
                         JsonElement element = tryParseJsonString(parser, objString);
 
                         if (element != null) {
-                            try {
-                                JSONMergeUtils.extendJSONObject(resultObject,
-                                        JSONMergeUtils.ConflictStrategy.MERGE_INTO_ARRAY, element.getAsJsonObject());
-                            } catch (Exception e) {
+                            if (element.isJsonObject()) {
+                                try {
+                                    JSONMergeUtils.extendJSONObject(resultObject,
+                                            JSONMergeUtils.ConflictStrategy.MERGE_INTO_ARRAY,
+                                            element.getAsJsonObject());
+                                } catch (JSONObjectExtensionException | UnsupportedOperationException e) {
+                                    throw new JSONObjectExtensionException("Could not extend JSON object.");
+                                }
+                            } else {
                                 throw new JsonParseException("Invalid JSON object. Could not extend.");
                             }
                         }
