@@ -33,6 +33,7 @@ import org.apache.synapse.aspects.AspectConfiguration;
 import org.apache.synapse.aspects.ComponentType;
 import org.apache.synapse.aspects.flow.statistics.StatisticIdentityGenerator;
 import org.apache.synapse.aspects.flow.statistics.data.artifact.ArtifactHolder;
+import org.apache.synapse.commons.CorrelationConstants;
 import org.apache.synapse.transport.customlogsetter.CustomLogSetter;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
@@ -351,7 +352,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                 Map headers = (Map) context.getProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS);
                 if (headers != null) {
                     headers.put(PassThroughConfiguration.getInstance().getCorrelationHeaderName(),
-                            context.getProperty(PassThroughConstants.CORRELATION_ID));
+                            context.getProperty(CorrelationConstants.CORRELATION_ID));
                 }
             }
         }
