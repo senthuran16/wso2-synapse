@@ -458,8 +458,7 @@ public class Target {
      * @param synCtx   message context.
      * @param jsonPath JSON-path expression to select the removing element.
      */
-    public void removeJson(MessageContext synCtx, SynapsePath jsonPath)
-            throws IOException, PathNotFoundException {
+    public void removeJson(MessageContext synCtx, SynapsePath jsonPath) throws IOException, PathNotFoundException {
         SynapseJsonPath synapseJsonPath = (SynapseJsonPath) jsonPath;
         Axis2MessageContext axis2smc = (Axis2MessageContext) synCtx;
         org.apache.axis2.context.MessageContext axis2MessageCtx = axis2smc.getAxis2MessageContext();
@@ -467,17 +466,22 @@ public class Target {
         String jsonPathString = synapseJsonPath.toString();
         // Removing "json-eval(" and extract the expression.
         jsonPathString = jsonPathString.substring(10, jsonPathString.length() - 1);
-        if (jsonPathString.equals("$") || jsonPathString.equals("$.")) {
-            JsonUtil.getNewJsonPayload(axis2MessageCtx, "", true, true);
-        } else {
-            String jsonString = IOUtils.toString(JsonUtil.getJsonPayload(axis2MessageCtx));
-            if (!StringUtils.isEmpty(jsonString)) {
-                String result = jsonString;
-                DocumentContext doc = JsonPath.parse(result);
-                doc.delete(synapseJsonPath.getJsonPath());
-                result = doc.jsonString();
-                JsonUtil.getNewJsonPayload(axis2MessageCtx, result, true, true);
+        // multi expression support ( accept comma separated list of JSON-path expressions )
+        String[] jsonPathArray = jsonPathString.split(",");
+        String jsonString = IOUtils.toString(JsonUtil.getJsonPayload(axis2MessageCtx));
+        String result = jsonString;
+        if (jsonPathArray.length > 0) {
+            for (String path : jsonPathArray) {
+                if (path.equals("$") || path.equals("$.")) {
+                    JsonUtil.getNewJsonPayload(axis2MessageCtx, "", true, true);
+                    result = "";
+                } else {
+                    DocumentContext doc = JsonPath.parse(result);
+                    doc.delete(path);
+                    result = doc.jsonString();
+                }
             }
+            JsonUtil.getNewJsonPayload(axis2MessageCtx, result, true, true);
         }
     }
 
