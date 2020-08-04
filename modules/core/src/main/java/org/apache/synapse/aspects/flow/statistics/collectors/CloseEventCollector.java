@@ -50,8 +50,8 @@ public class CloseEventCollector extends RuntimeStatisticCollector {
 	 */
 	public static void closeEntryEvent(MessageContext messageContext, String componentName, ComponentType componentType,
 									   Integer currentIndex, boolean isContentAltering) {
-		closeEntryEvent(messageContext, componentName, componentType, currentIndex, isContentAltering, null);
-	}
+        closeEntryEvent(messageContext, componentName, componentType, currentIndex, isContentAltering, null);
+    }
 
 	/**
 	 * Enqueue statistics event to the event queue. This method receives statistics events from synapse mediation

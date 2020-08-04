@@ -156,7 +156,7 @@ public class StatisticsLog {
 		this.transportPropertyMap = statisticDataUnit.getTransportPropertyMap();
 		this.componentType = statisticDataUnit.getComponentType();
 		this.hashCode = statisticDataUnit.getHashCode();
-		this.propertyValue = statisticDataUnit.getPropertyValue();
+        this.propertyValue = statisticDataUnit.getPropertyValue();
 		if (statisticDataUnit.getComponentId() == null) {
 			this.componentId = StatisticsConstants.HASH_CODE_NULL_COMPONENT;
 		} else {
@@ -356,11 +356,11 @@ public class StatisticsLog {
 		this.componentType = componentType;
 	}
 
-	public String getPropertyValue() {
-		return propertyValue;
-	}
+    public String getPropertyValue() {
+        return propertyValue;
+    }
 
-	public void setPropertyValue(String propertyValue) {
-		this.propertyValue = propertyValue;
-	}
+    public void setPropertyValue(String propertyValue) {
+        this.propertyValue = propertyValue;
+    }
 }
