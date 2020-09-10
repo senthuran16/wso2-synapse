@@ -504,7 +504,7 @@ public class Target {
                 synapseJsonPath =
                         new SynapseJsonPath(InlineExpressionUtil.replaceDynamicValues(synapseContext, jsonpath));
             } catch (JaxenException e) {
-                e.printStackTrace();
+               log.error("Error occurred while evaluating JSONPath", e);
             }
         }
 
