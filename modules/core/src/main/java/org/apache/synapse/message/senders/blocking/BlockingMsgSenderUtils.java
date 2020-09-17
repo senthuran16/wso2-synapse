@@ -333,6 +333,8 @@ public class BlockingMsgSenderUtils {
     private static String[] allowedProperties = {"JSON_OBJECT",
                                                  "JSON_STRING",
                                                  "setCharacterEncoding",
+                                                 "FOLLOW_REDIRECT",
+                                                 "DISABLE_COOKIE",
                                                  NhttpConstants.DISTRIBUTED_TRANSACTION,
                                                  NhttpConstants.DISTRIBUTED_TRANSACTION_MANAGER,
                                                  Constants.Configuration.HTTP_METHOD,
