@@ -18,15 +18,6 @@
 
 package org.apache.synapse.commons.json;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.axiom.om.impl.llom.OMElementImpl;
-import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.synapse.commons.SynapseCommonsException;
-import org.apache.synapse.commons.staxon.core.json.JsonXMLConfig;
-import org.apache.synapse.commons.staxon.core.json.JsonXMLConfigBuilder;
-import org.apache.synapse.commons.staxon.core.json.JsonXMLInputFactory;
-import org.apache.synapse.commons.staxon.core.json.JsonXMLOutputFactory;
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMAttribute;
 import org.apache.axiom.om.OMElement;
@@ -34,23 +25,24 @@ import org.apache.axiom.om.OMNamespace;
 import org.apache.axiom.om.OMNode;
 import org.apache.axiom.om.OMText;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
+import org.apache.axiom.om.impl.llom.OMElementImpl;
 import org.apache.axiom.om.impl.llom.OMSourcedElementImpl;
 import org.apache.axiom.soap.SOAPBody;
 import org.apache.axiom.soap.SOAPEnvelope;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
+import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.synapse.commons.SynapseCommonsException;
+import org.apache.synapse.commons.staxon.core.json.JsonXMLConfig;
+import org.apache.synapse.commons.staxon.core.json.JsonXMLConfigBuilder;
+import org.apache.synapse.commons.staxon.core.json.JsonXMLInputFactory;
+import org.apache.synapse.commons.staxon.core.json.JsonXMLOutputFactory;
 import org.apache.synapse.commons.util.MiscellaneousUtil;
 
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -58,8 +50,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLEventWriter;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 public final class JsonUtil {
     private static Log logger = LogFactory.getLog(JsonUtil.class.getName());
@@ -357,6 +357,10 @@ public final class JsonUtil {
      * @throws org.apache.axis2.AxisFault
      */
     public static void writeAsJson(MessageContext messageContext, OutputStream out) throws AxisFault {
+        writeAsJson(messageContext, out, null);
+    }
+
+    public static void writeAsJson(MessageContext messageContext, OutputStream out, String encoding) throws AxisFault {
         if (messageContext == null || out == null) {
             return;
         }
@@ -377,10 +381,10 @@ public final class JsonUtil {
                     if (isAJsonPayloadElement(element)) {
                         writeJsonStream(json, messageContext, out);
                     } else { // Ignore the JSON stream
-                        writeAsJson(element, out);
+                        writeAsJson(element, out, encoding);
                     }
                 } else if (element != null) { // element is not an OMSourcedElementImpl. But we ignore the JSON stream.
-                    writeAsJson(element, out);
+                    writeAsJson(element, out, encoding);
                 } else { // element == null.
                     writeJsonStream(json, messageContext, out);
                 }
@@ -390,7 +394,7 @@ public final class JsonUtil {
                 throw new AxisFault("Could not write JSON stream.", e);
             }
         } else if (element != null) { // No JSON stream found. Convert the existing element to JSON.
-            writeAsJson(element, out, populateRequiredProperties(messageContext), JsonUtil.jsonOutputFactory);
+            writeAsJson(element, out, populateRequiredProperties(messageContext), JsonUtil.jsonOutputFactory, encoding);
         } else if (jsonStr != null) { // No JSON stream or element found. See if there's a JSON_STRING set.
             try {
                 out.write(jsonStr.getBytes());
@@ -486,9 +490,17 @@ public final class JsonUtil {
      * @throws AxisFault
      */
     public static void writeAsJson(OMElement element, OutputStream outputStream) throws AxisFault {
-        writeAsJson(element, outputStream, null, null);
+        writeAsJson(element, outputStream, null, null, null);
     }
 
+    public static void writeAsJson(OMElement element, OutputStream outputStream, String encoding) throws AxisFault {
+        writeAsJson(element, outputStream, null, null, encoding);
+    }
+
+    public static void writeAsJson(OMElement element, OutputStream outputStream, Map properties,
+                                   JsonXMLOutputFactory jsonOutputFactory) throws AxisFault {
+        writeAsJson(element, outputStream, properties, jsonOutputFactory, null);
+    }
     /**
      * Converts an XML element to its JSON representation and writes it to an output stream.<br/>
      * Note that this method removes all existing namespace declarations and namespace prefixes of the provided XML
@@ -498,11 +510,11 @@ public final class JsonUtil {
      * @param outputStream Output Stream to write the JSON representation.<br/>
      *                     At the end of a successful conversion, its flush method will be called.
      * @param properties   Message context properties
+     * @param encoding   format to get encoding
      * @throws AxisFault
      */
     public static void writeAsJson(OMElement element, OutputStream outputStream, Map properties,
-                                   JsonXMLOutputFactory jsonOutputFactory) throws
-            AxisFault {
+                                   JsonXMLOutputFactory jsonOutputFactory, String encoding) throws AxisFault {
         jsonOutputFactory = jsonOutputFactory == null ? JsonUtil.jsonOutputFactory : jsonOutputFactory;
         if (element == null) {
             throw new AxisFault("OMElement is null. Cannot convert to JSON.");
@@ -511,7 +523,7 @@ public final class JsonUtil {
             return;
         }
         transformElement(element, true, properties, jsonOutputFactory);
-        convertOMElementToJson(element, outputStream, jsonOutputFactory);
+        convertOMElementToJson(element, outputStream, jsonOutputFactory, encoding);
     }
 
     /**
@@ -524,6 +536,11 @@ public final class JsonUtil {
      */
     private static void convertOMElementToJson(OMElement element, OutputStream outputStream,
                                                JsonXMLOutputFactory jsonOutputFactory) throws AxisFault {
+        convertOMElementToJson(element, outputStream, jsonOutputFactory, null);
+    }
+
+    private static void convertOMElementToJson(OMElement element, OutputStream outputStream,
+                                               JsonXMLOutputFactory jsonOutputFactory, String encoding) throws AxisFault {
         XMLEventReader xmlEventReader = null;
         XMLEventWriter jsonWriter = null;
         try {
@@ -541,7 +558,11 @@ public final class JsonUtil {
                             new ByteArrayInputStream(xmlStream.toByteArray())
                     ), jsonOutputFactory.getConfig().isProcessNCNames())
             );
-            jsonWriter = jsonOutputFactory.createXMLEventWriter(outputStream);
+            if (encoding != null) {
+                jsonWriter = jsonOutputFactory.createXMLEventWriter(outputStream, encoding);
+            } else {
+                jsonWriter = jsonOutputFactory.createXMLEventWriter(outputStream);
+            }
             jsonWriter.add(xmlEventReader);
             outputStream.flush();
         } catch (XMLStreamException e) {
