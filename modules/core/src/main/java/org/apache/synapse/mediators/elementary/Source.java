@@ -75,15 +75,13 @@ public class Source {
 
     private OMNode inlineOMNode = null;
 
-    private OMNode inlineOMNodeWithValues = null;
-
     private String inlineKey = null;
 
     private boolean containsInlineExpressions = false;
 
     private static final Log log = LogFactory.getLog(Source.class);
 
-    public ArrayList<OMNode> evaluate(MessageContext synCtx, SynapseLog synLog)
+    public ArrayList<OMNode> evaluate(MessageContext synCtx, SynapseLog synLog, OMNode inlineOMNodeWithValues)
             throws JaxenException {
 
         ArrayList<OMNode> sourceNodeList = new ArrayList<OMNode>();
@@ -263,12 +261,14 @@ public class Source {
      * @param synCtx - Current Message Context
      * @param synLog - Default Logger for the package
      * @param sourcePropertyJson Parsed Json element
+     * @param inlineOMNodeWithValues Inline OM Node with values if there are dynamic expressions
      * @return A HashMap with the following keys: <br/>
      * [1] "errorsExistInSrcTag" - holds either true or false <br/>
      * [2] "evaluatedSrcJsonElement" - holds the evaluated Json Element as an Object
      */
     public JsonElement evaluateJson(MessageContext synCtx, SynapseLog synLog,
-                                    JsonElement sourcePropertyJson) throws JaxenException {
+                                    JsonElement sourcePropertyJson, OMNode inlineOMNodeWithValues)
+            throws JaxenException{
         JsonElement object = null;
         String jsonPath = null;
         JsonParser parser = new JsonParser();
@@ -403,16 +403,6 @@ public class Source {
 
     public void setInlineKey(String inlineKey) {
         this.inlineKey = inlineKey;
-    }
-
-    public OMNode getInlineOMNodeWithValues() {
-
-        return inlineOMNodeWithValues;
-    }
-
-    public void setInlineOMNodeWithValues(OMNode inlineOMNodeWithValues) {
-
-        this.inlineOMNodeWithValues = inlineOMNodeWithValues;
     }
 
     public boolean containsInlineExpressions() {
