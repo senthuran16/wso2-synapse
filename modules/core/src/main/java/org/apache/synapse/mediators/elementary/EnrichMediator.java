@@ -89,8 +89,6 @@ public class EnrichMediator extends AbstractMediator {
 
     private boolean isNativeJsonSupportEnabled = false;
 
-    private boolean containsInlineExpressions = false;
-
     public boolean mediate(MessageContext synCtx) {
 
         if (synCtx.getEnvironment().isDebuggerEnabled()) {
@@ -160,75 +158,82 @@ public class EnrichMediator extends AbstractMediator {
         // If the inline text contains expressions, we need to evaluate the values
         // and decide on the type (whether XML or JSON)
         boolean isInlineTextXML = !isNativeJsonSupportEnabled;
+        try {
 
-        if (containsInlineExpressions()) {
-            OMNode inlineOMNode = source.getInlineOMNode();
-            source.setInitialInlineOMNode(inlineOMNode);
-            if (inlineOMNode != null) {
-                if (inlineOMNode instanceof OMText) {
-                    // If the node type is text, it can either be a JSON string or an expression
-                    // If it is an expression we must check again after resolving the expressions
-                    // whether it is XML or JSON
-                    isInlineTextXML = setDynamicValuesInNode(synCtx, ((OMTextImpl) inlineOMNode).getText());
-                } else if (inlineOMNode instanceof OMElement) {
-                    isInlineTextXML = setDynamicValuesInNode(synCtx, inlineOMNode.toString());
+            if (source.containsInlineExpressions()) {
+                OMNode inlineOMNode = source.getInlineOMNode();
+                if (inlineOMNode != null) {
+                    if (inlineOMNode instanceof OMText) {
+                        // If the node type is text, it can either be a JSON string or an expression
+                        // If it is an expression we must check again after resolving the expressions
+                        // whether it is XML or JSON
+                        isInlineTextXML = setDynamicValuesInNode(synCtx, ((OMTextImpl) inlineOMNode).getText());
+                    } else if (inlineOMNode instanceof OMElement) {
+                        isInlineTextXML = setDynamicValuesInNode(synCtx, inlineOMNode.toString());
+                    }
                 }
             }
-        }
 
-        boolean hasJSONPayload = JsonUtil.hasAJsonPayload(((Axis2MessageContext) synCtx).getAxis2MessageContext());
-        if (isNativeJsonSupportEnabled && hasJSONPayload && !isSourcePropertyXML && !isInlineTextXML) {
-            // handling the remove action separately
-            if (target.getAction().equals("remove")) {
-                try {
-                    if (source.getXpath() != null && source.getXpath() instanceof SynapseJsonPath) {
-                        target.removeJson(synCtx, source.getXpath());
-                    } else {
-                        handleException("source Xpath is mandatory for the Remove action", synCtx);
+            boolean hasJSONPayload = JsonUtil.hasAJsonPayload(((Axis2MessageContext) synCtx).getAxis2MessageContext());
+            if (isNativeJsonSupportEnabled && hasJSONPayload && !isSourcePropertyXML && !isInlineTextXML) {
+                // handling the remove action separately
+                if (target.getAction().equals("remove")) {
+                    try {
+                        if (source.getXpath() != null && source.getXpath() instanceof SynapseJsonPath) {
+                            target.removeJson(synCtx, source.getXpath());
+                        } else {
+                            handleException("source Xpath is mandatory for the Remove action", synCtx);
+                        }
+                    } catch (IOException | PathNotFoundException e) {
+                        handleException("Error occurred while executing the action : remove", e, synCtx);
                     }
-                } catch (IOException | PathNotFoundException e) {
-                    handleException("Error occurred while executing the action : remove", e, synCtx);
+                } else {
+                    Object sourceNode;
+                    try {
+                        sourceNode = source.evaluateJson(synCtx, synLog, sourcePropertyJson);
+                        if (sourceNode == null) {
+                            handleException("Failed to get the source for Enriching : ", synCtx);
+                        } else {
+                            target.insertJson(synCtx, sourceNode, synLog);
+                        }
+                    } catch (JaxenException e) {
+                        handleException("Failed to get the source for Enriching", e, synCtx);
+                    }
                 }
             } else {
-                Object sourceNode;
+                // TODO implement target action "remove" for XML
+                ArrayList<OMNode> sourceNodeList;
                 try {
-                    sourceNode = source.evaluateJson(synCtx, synLog, sourcePropertyJson);
-                    if (sourceNode == null) {
+                    sourceNodeList = source.evaluate(synCtx, synLog);
+                    if (sourceNodeList == null) {
                         handleException("Failed to get the source for Enriching : ", synCtx);
                     } else {
-                        target.insertJson(synCtx, sourceNode, synLog);
+                        target.insert(synCtx, sourceNodeList, synLog);
                     }
                 } catch (JaxenException e) {
                     handleException("Failed to get the source for Enriching", e, synCtx);
                 }
-            }
-        } else {
-            // TODO implement target action "remove" for XML
-            ArrayList<OMNode> sourceNodeList;
-            try {
-                sourceNodeList = source.evaluate(synCtx, synLog);
-                if (sourceNodeList == null) {
-                    handleException("Failed to get the source for Enriching : ", synCtx);
-                } else {
-                    target.insert(synCtx, sourceNodeList, synLog);
+
+                // Removing the JSON stream since the payload is now updated.
+                // Json-eval and other JsonUtil functions now needs to convert XML -> JSON
+                // related to wso2/product-ei/issues/1771
+                if (target.getTargetType() == EnrichMediator.BODY || target.getTargetType() == EnrichMediator.CUSTOM) {
+                    axis2MsgCtx.removeProperty(Constants.ORG_APACHE_SYNAPSE_COMMONS_JSON_JSON_INPUT_STREAM);
                 }
-            } catch (JaxenException e) {
-                handleException("Failed to get the source for Enriching", e, synCtx);
             }
 
-            // Removing the JSON stream since the payload is now updated.
-            // Json-eval and other JsonUtil functions now needs to convert XML -> JSON
-            // related to wso2/product-ei/issues/1771
-            if (target.getTargetType() == EnrichMediator.BODY || target.getTargetType() == EnrichMediator.CUSTOM) {
-                axis2MsgCtx.removeProperty(Constants.ORG_APACHE_SYNAPSE_COMMONS_JSON_JSON_INPUT_STREAM);
+            //  If we enrich the body or envelope we need to remove the NO_ENTITY_BODY property
+            //  Related issue https://github.com/wso2/product-ei/issues/3586
+            if (target.getTargetType() == EnrichMediator.BODY || target.getTargetType() == EnrichMediator.ENVELOPE) {
+                axis2MsgCtx.removeProperty(PassThroughConstants.NO_ENTITY_BODY);
             }
-        }
-
-
-        //  If we enrich the body or envelope we need to remove the NO_ENTITY_BODY property
-        //  Related issue https://github.com/wso2/product-ei/issues/3586
-        if (target.getTargetType() == EnrichMediator.BODY || target.getTargetType() == EnrichMediator.ENVELOPE) {
-            axis2MsgCtx.removeProperty(PassThroughConstants.NO_ENTITY_BODY);
+        } finally {
+            // If the inlineOMNodeWithValues is not null, it means that inline OM Node has been overridden with the
+            // inline string containing resolved dynamic values. Therefore, we should set it back to null after
+            // the content has been enriched
+            if (source.getInlineOMNodeWithValues() != null) {
+                source.setInlineOMNodeWithValues(null);
+            }
         }
 
         synLog.traceOrDebug("End : Enrich mediator");
@@ -249,11 +254,11 @@ public class EnrichMediator extends AbstractMediator {
         try {
             // After the expressions in the inline text is replaced with the value, the string must be parsed
             // again to identify whether it has changed to a XML
-            source.setInlineOMNode(AXIOMUtil.stringToOM(inlineString));
+            source.setInlineOMNodeWithValues(AXIOMUtil.stringToOM(inlineString));
             isInlineTextXML = true;
         } catch (XMLStreamException | OMException e) {
             // The string is considered as a text / JSON
-            source.setInlineOMNode(OMAbstractFactory.getOMFactory().createOMText(inlineString));
+            source.setInlineOMNodeWithValues(OMAbstractFactory.getOMFactory().createOMText(inlineString));
         }
         return isInlineTextXML;
     }
@@ -283,13 +288,4 @@ public class EnrichMediator extends AbstractMediator {
         isNativeJsonSupportEnabled = nativeJsonSupportEnabled;
     }
 
-    public boolean containsInlineExpressions() {
-
-        return containsInlineExpressions;
-    }
-
-    public void setContainsInlineExpressions(boolean containsInlineExpressions) {
-
-        this.containsInlineExpressions = containsInlineExpressions;
-    }
 }
