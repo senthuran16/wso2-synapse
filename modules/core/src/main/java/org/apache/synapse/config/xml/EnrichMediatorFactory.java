@@ -122,7 +122,7 @@ public class EnrichMediatorFactory extends AbstractMediatorFactory {
             }
 
             if (!StringUtils.isEmpty(inlineString)) {
-                enrich.setContainsInlineExpressions(InlineExpressionUtil.checkForInlineExpressions(inlineString));
+                source.setContainsInlineExpressions(InlineExpressionUtil.checkForInlineExpressions(inlineString));
             }
         }
 
