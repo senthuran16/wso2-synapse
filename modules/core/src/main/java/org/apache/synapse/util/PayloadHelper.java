@@ -24,6 +24,9 @@ import java.util.Iterator;
 import javax.activation.DataHandler;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.apache.axiom.om.OMAbstractFactory;
@@ -58,6 +61,13 @@ public class PayloadHelper {
 			TEXTPAYLOADTYPE = 2, MAPPAYLOADTYPE = 3;
 
 	public static final Log log = LogFactory.getLog(PayloadHelper.class);
+
+	public static final String BUILDER_NAMESPACE_FEATURE = "http://xml.org/sax/features/namespaces";
+	public static final String BUILDER_VALIDATION_FEATURE = "http://xml.org/sax/features/validation";
+	public static final String BUILDER_LOAD_DTD_FEATURE =
+			"http://apache.org/xml/features/nonvalidating/load-dtd-grammar";
+	public static final String BUILDER_LOAD_EXTERNAL_FEATURE =
+			"http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
 	// gets a indication of the payload type. Default is XML
 	// You cannot set the payload type. Instead, it is set automatically when
@@ -279,16 +289,16 @@ public class PayloadHelper {
 		}
 		setMapPayload(mc.getEnvelope(), map);
 	}
-	
+
 	public static XMLStreamReader getStAXPayload(SOAPEnvelope envelope) {
-		 
+
 		OMElement el = getXMLPayload(envelope);
 		if (el==null) {
 			return null;
 		}
 		return el.getXMLStreamReader();
 	}
-    
+
 	public static XMLStreamReader getStAXPayload(MessageContext mc) {
 		if (mc.getEnvelope() == null) {
 			log.error("null envelope");
@@ -312,5 +322,22 @@ public class PayloadHelper {
 			}
 			setStAXPayload(mc.getEnvelope(), streamReader);
 		}
+	}
+
+	/**
+	 * Create DocumentBuilder for parsing XML payloads to check version
+	 */
+	public static DocumentBuilder createSimpleDocumentBuilder() throws ParserConfigurationException {
+		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+
+		//unnecessary features are turned off since we need document builder only to check XML version
+		documentBuilderFactory.setNamespaceAware(false);
+		documentBuilderFactory.setValidating(false);
+		documentBuilderFactory.setFeature(BUILDER_NAMESPACE_FEATURE, false);
+		documentBuilderFactory.setFeature(BUILDER_VALIDATION_FEATURE, false);
+		documentBuilderFactory.setFeature(BUILDER_LOAD_DTD_FEATURE, false);
+		documentBuilderFactory.setFeature(BUILDER_LOAD_EXTERNAL_FEATURE, false);
+
+		return documentBuilderFactory.newDocumentBuilder();
 	}
 }

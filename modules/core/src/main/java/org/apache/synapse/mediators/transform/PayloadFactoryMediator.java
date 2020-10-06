@@ -35,26 +35,24 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.protocol.HTTP;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.SynapseException;
 import org.apache.synapse.commons.json.JsonUtil;
 import org.apache.synapse.config.xml.SynapsePath;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.mediators.AbstractMediator;
 import org.apache.synapse.mediators.Value;
 import org.apache.synapse.util.AXIOMUtils;
+import org.apache.synapse.util.PayloadHelper;
 import org.apache.synapse.util.xpath.SynapseJsonPath;
 import org.apache.synapse.util.xpath.SynapseXPath;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -98,6 +96,15 @@ public class PayloadFactoryMediator extends AbstractMediator {
     private static Pattern validJsonNumber = Pattern.compile("^-?(0|([1-9]\\d*))(\\.\\d+)?([eE][+-]?\\d+)?$");
 
     private static final Log log = LogFactory.getLog(PayloadFactoryMediator.class);
+    private DocumentBuilder documentBuilder = null;
+
+    public PayloadFactoryMediator() {
+        try {
+            this.documentBuilder = PayloadHelper.createSimpleDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            throw new SynapseException("Error creating Simple Document Builder", e);
+        }
+    }
 
     /**
      * Contains 2 paths - one when JSON Streaming is in use (mediateJsonStreamPayload) and the other for regular
@@ -513,6 +520,7 @@ public class PayloadFactoryMediator extends AbstractMediator {
     private HashMap<String, ArgumentDetails>[] getArgValues(MessageContext synCtx) {
         HashMap<String, ArgumentDetails>[] argValues = new HashMap[pathArgumentList.size()];
         HashMap<String, ArgumentDetails> valueMap;
+        String xmlVersion = null;
         String value = "";
         for (int i = 0; i < pathArgumentList.size(); ++i) {       /*ToDo use foreach*/
             Argument arg = pathArgumentList.get(i);
@@ -521,7 +529,10 @@ public class PayloadFactoryMediator extends AbstractMediator {
                 value = arg.getValue();
                 details.setXml(isXML(value));
                 if (!details.isXml()) {
-                    value = escapeXMLEnvelope(synCtx, value);
+                    if (xmlVersion == null) {
+                        xmlVersion = checkXMLVersion(synCtx);
+                    }
+                    value = escapeXMLEnvelope(xmlVersion, value);
                 }
                 value = Matcher.quoteReplacement(value);
             } else if (arg.getExpression() != null) {
@@ -532,7 +543,10 @@ public class PayloadFactoryMediator extends AbstractMediator {
                     // of the payload is XML.
                     details.setXml(isXML(value));
                     if (!details.isXml() && XML_TYPE.equals(getType()) && !isJson(value.trim(), arg.getExpression())) {
-                        value = escapeXMLEnvelope(synCtx, value);
+                        if (xmlVersion == null) {
+                            xmlVersion = checkXMLVersion(synCtx);
+                        }
+                        value = escapeXMLEnvelope(xmlVersion, value);
                     }
                     value = Matcher.quoteReplacement(value);
                 } else {
@@ -579,11 +593,11 @@ public class PayloadFactoryMediator extends AbstractMediator {
      */
     private boolean isXML(String value) {
         try {
-            AXIOMUtil.stringToOM(value);
             value = value.trim();
             if (!value.endsWith(">") || value.length() < 4) {
                 return false;
             }
+            AXIOMUtil.stringToOM(value);
             return true;
         } catch (XMLStreamException ignore) {
             // means not a xml
@@ -653,7 +667,6 @@ public class PayloadFactoryMediator extends AbstractMediator {
         return mediaType;
     }
 
-
     private OMElement getTextElement(String content) {
         OMFactory factory = OMAbstractFactory.getOMFactory();
         OMElement textElement = factory.createOMElement(TEXT_ELEMENT);
@@ -674,44 +687,36 @@ public class PayloadFactoryMediator extends AbstractMediator {
      *
      * @param msgCtx Message Context
      * @return xmlVersion in XML Declaration
-     * @throws ParserConfigurationException failure in building message envelope document
-     * @throws IOException Error reading message envelope
-     * @throws SAXException Error parsing message envelope
      */
-    private String checkXMLVersion(MessageContext msgCtx) throws IOException, SAXException, ParserConfigurationException {
-        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        InputSource inputSource = new InputSource(new StringReader(msgCtx.getEnvelope().toString()));
-        Document document = documentBuilder.parse(inputSource);
-        return document.getXmlVersion();
+    private String checkXMLVersion(MessageContext msgCtx) {
+        try {
+            InputSource inputSource = new InputSource(new StringReader(msgCtx.getEnvelope().toString()));
+            Document document;
+            synchronized (documentBuilder) {
+                document = documentBuilder.parse(inputSource);
+            }
+            return document.getXmlVersion();
+        } catch (SAXException e) {
+            log.error("Error parsing message envelope", e);
+        } catch (IOException e) {
+            log.error("Error reading message envelope", e);
+        }
+        return "1.0";
     }
 
     /**
      * Escapes XML special characters
      *
-     * @param msgCtx Message Context
-     * @param value XML String which needs to be escaped
+     * @param xmlVersion XML version of the value
+     * @param value      XML String which needs to be escaped
      * @return XML special char escaped string
      */
-    private String escapeXMLEnvelope(MessageContext msgCtx, String value) {
-        String xmlVersion = "1.0"; //Default is set to 1.0
-
-        try {
-            xmlVersion = checkXMLVersion(msgCtx);
-        } catch (IOException e) {
-            log.error("Error reading message envelope", e);
-        } catch (SAXException e) {
-            log.error("Error parsing message envelope", e);
-        } catch (ParserConfigurationException e) {
-            log.error("Error building message envelope document", e);
-        }
-
-        if("1.1".equals(xmlVersion)) {
+    private String escapeXMLEnvelope(String xmlVersion, String value) {
+        if ("1.1".equals(xmlVersion)) {
             return org.apache.commons.text.StringEscapeUtils.escapeXml11(value);
         } else {
             return org.apache.commons.text.StringEscapeUtils.escapeXml10(value);
         }
-
     }
 
     public boolean isEscapeXmlChars() {
