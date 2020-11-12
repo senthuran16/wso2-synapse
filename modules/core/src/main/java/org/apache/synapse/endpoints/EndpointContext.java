@@ -80,6 +80,9 @@ public class EndpointContext {
     /** Metrics bean to notify the state changes */
     private EndpointView metricsBean = null;
 
+    /** Endpoint is in switch off status or not */
+    private boolean isSwitchOff  = false;
+
     // for clustered mode operation, keys pre-computed and used for replication
     private final String STATE_KEY;
     private final String NEXT_RETRY_TIME_KEY;
@@ -225,51 +228,58 @@ public class EndpointContext {
             }
 
         } else {
-
-            localState = state;
-            if (definition == null) return;
-            switch (state) {
-                case ST_ACTIVE: {
-                    localRemainingRetries = definition.getRetriesOnTimeoutBeforeSuspend();
-                    localLastSuspendDuration = -1;
-                    break;
-                }
-                case ST_TIMEOUT: {
-                    int retries = localRemainingRetries;
-                    if (retries == -1) {
-                        retries = definition.getRetriesOnTimeoutBeforeSuspend();
+            /**
+             * The isSwitchOff flag becomes true when the endpoint is switched off manually. This state is maintained
+             * until the endpoint is activated.
+             */
+            if (isSwitchOff) {
+                localState = ST_OFF;
+            } else {
+                localState = state;
+                if (definition == null) return;
+                switch (state) {
+                    case ST_ACTIVE: {
+                        localRemainingRetries = definition.getRetriesOnTimeoutBeforeSuspend();
+                        localLastSuspendDuration = -1;
+                        break;
                     }
+                    case ST_TIMEOUT: {
+                        int retries = localRemainingRetries;
+                        if (retries == -1) {
+                            retries = definition.getRetriesOnTimeoutBeforeSuspend();
+                        }
 
-                    if (retries <= 0) {
-                        log.info("Endpoint : " + endpointName + printEndpointAddress()
-                                + " has been marked for SUSPENSION, "
-                                + "but no further retries remain. Thus it will be SUSPENDED.");
+                        if (retries <= 0) {
+                            log.info("Endpoint : " + endpointName + printEndpointAddress()
+                                    + " has been marked for SUSPENSION, "
+                                    + "but no further retries remain. Thus it will be SUSPENDED.");
 
-                        setState(ST_SUSPENDED);
+                            setState(ST_SUSPENDED);
 
-                    } else {
-                        localRemainingRetries = retries - 1;
-                        localNextRetryTime =
-                                System.currentTimeMillis() + definition.getRetryDurationOnTimeout();
+                        } else {
+                            localRemainingRetries = retries - 1;
+                            localNextRetryTime =
+                                    System.currentTimeMillis() + definition.getRetryDurationOnTimeout();
 
-                        log.warn("Endpoint : " + endpointName + printEndpointAddress()
-                                + " is marked as TIMEOUT and " +
-                                "will be retried : " + localRemainingRetries + " more time/s " +
-                                "after : " + new Date(localNextRetryTime)
-                                + " until its marked SUSPENDED for failure");
+                            log.warn("Endpoint : " + endpointName + printEndpointAddress()
+                                    + " is marked as TIMEOUT and " +
+                                    "will be retried : " + localRemainingRetries + " more time/s " +
+                                    "after : " + new Date(localNextRetryTime)
+                                    + " until its marked SUSPENDED for failure");
+                        }
+                        break;
                     }
-                    break;
-                }
-                case ST_SUSPENDED: {
-                    computeNextRetryTimeForSuspended();
-                    break;
-                }
-                case ST_OFF: {
-                    // mark as in maintenence, and reset all other information
-                    localRemainingRetries = definition == null ?
-                            -1 : definition.getRetriesOnTimeoutBeforeSuspend();
-                    localLastSuspendDuration = -1;
-                    break;
+                    case ST_SUSPENDED: {
+                        computeNextRetryTimeForSuspended();
+                        break;
+                    }
+                    case ST_OFF: {
+                        // mark as in maintenence, and reset all other information
+                        localRemainingRetries = definition == null ?
+                                -1 : definition.getRetriesOnTimeoutBeforeSuspend();
+                        localLastSuspendDuration = -1;
+                        break;
+                    }
                 }
             }
         }
@@ -374,11 +384,15 @@ public class EndpointContext {
             log.debug("Checking if endpoint : " + endpointName + printEndpointAddress() + " currently at state " +
                     getStateAsString() + " can be used now?");
         }
-
+        Integer state;
         if (isClustered) {
+            if (isSwitchOff) {
+                state = ST_OFF;
+            } else {
+                // gets the value from configuration context (The shared state across all instances)
+                state = (Integer) cfgCtx.getPropertyNonReplicable(STATE_KEY);
+            }
 
-            // gets the value from configuration context (The shared state across all instances)
-            Integer state = (Integer) cfgCtx.getPropertyNonReplicable(STATE_KEY);
             Integer remainingRetries
                     = (Integer) cfgCtx.getPropertyNonReplicable(REMAINING_RETRIES_KEY);
             Long nextRetryTime = (Long) cfgCtx.getPropertyNonReplicable(NEXT_RETRY_TIME_KEY);
@@ -471,6 +485,7 @@ public class EndpointContext {
     public void switchOff() {
         log.info("Manually switching off endpoint : " + endpointName + printEndpointAddress() );
         setState(ST_OFF);
+        isSwitchOff = true;
     }
 
     /**
@@ -479,6 +494,7 @@ public class EndpointContext {
     public void switchOn() {
         log.info("Manually activating endpoint : " + endpointName + printEndpointAddress());
         setState(ST_ACTIVE);
+        isSwitchOff = false;
     }
 
     public boolean isState(int s) {
