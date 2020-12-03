@@ -72,6 +72,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.xml.parsers.FactoryConfigurationError;
 
@@ -221,7 +222,8 @@ public class ServerWorker implements Runnable {
         if (contentType == null || contentType.isEmpty()) {
             contentType = PassThroughConstants.APPLICATION_OCTET_STREAM;
             // Temp fix for https://github.com/wso2/product-ei/issues/2001
-            if (HTTPConstants.HTTP_METHOD_GET.equals(msgContext.getProperty(HTTP_METHOD))) {
+            if (HTTPConstants.HTTP_METHOD_GET.equals(msgContext.getProperty(HTTP_METHOD)) ||
+                    "DELETE".equals(msgContext.getProperty(HTTP_METHOD))) {
                 contentType = HTTPConstants.MEDIA_TYPE_X_WWW_FORM;
             }
         }
