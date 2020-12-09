@@ -294,7 +294,8 @@ public class Target {
                 if (jsonElement instanceof JsonObject || jsonElement instanceof JsonArray) {
                     try {
                         JsonUtil.getNewJsonPayload(((Axis2MessageContext) synCtx).getAxis2MessageContext(),
-                                                   sourceString, true, true);
+                                sourceString, true, true);
+                        synCtx.getEnvelope().getBody().toString();
                         return;
                     } catch (AxisFault af) {
                         log.error("Could not add json object to the json stream", af);
