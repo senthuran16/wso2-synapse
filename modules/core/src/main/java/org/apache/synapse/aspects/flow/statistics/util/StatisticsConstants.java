@@ -86,6 +86,16 @@ public class StatisticsConstants {
 	public static final String JAEGER_REPORTER_FLUSH_INTERVAL = "jaeger.reporter.flush.interval";
 
 	/**
+	 * Enable New Relic.
+	 */
+	public static final String ENABLE_ZIPKIN = "opentracing.zipkin.enable";
+
+	/**
+	 * Agent URL for New Relic backend.
+	 */
+	public static final String ZIPKIN_BACKEND_URL = "opentracing.zipkin.backend.url";
+
+	/**
 	 * Flow statistic queue size.
 	 */
 	public static final String FLOW_STATISTICS_QUEUE_SIZE = "mediation.flow.statistics.queue.size";

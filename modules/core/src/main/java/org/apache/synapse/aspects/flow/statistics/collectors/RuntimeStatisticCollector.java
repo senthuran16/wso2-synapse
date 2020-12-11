@@ -111,7 +111,21 @@ public abstract class RuntimeStatisticCollector {
             new MediationFlowController();
 
             if (isOpenTracingEnabled) {
-                initOpenTracing(isCollectingPayloads, isCollectingProperties);
+                boolean isZipkinEnabled = SynapsePropertiesLoader.getBooleanProperty(
+                        StatisticsConstants.ENABLE_ZIPKIN, false);
+
+                if (!isZipkinEnabled) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Jaeger client is enabled for traces");
+                    }
+                    initOpenTracingJaegerClient(isCollectingPayloads, isCollectingProperties);
+                }
+                else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Zipkin client is enabled for traces");
+                    }
+                    initOpenTracingZipkinClient(isCollectingPayloads, isCollectingProperties);
+                }
             }
         } else {
             if (log.isDebugEnabled()) {
@@ -120,7 +134,7 @@ public abstract class RuntimeStatisticCollector {
         }
     }
 
-    private static void initOpenTracing(boolean isCollectingPayloads, boolean isCollectingProperties) {
+    private static void initOpenTracingJaegerClient(boolean isCollectingPayloads, boolean isCollectingProperties) {
         final String DEFAULT_JAEGER_SAMPLER_MANAGER_HOST = "localhost";
         final String DEFAULT_JAEGER_SAMPLER_MANAGER_PORT = "5778";
         final String DEFAULT_JAEGER_SENDER_AGENT_HOST = "localhost";
@@ -153,11 +167,13 @@ public abstract class RuntimeStatisticCollector {
                 SynapsePropertiesLoader.getPropertyValue(
                         StatisticsConstants.JAEGER_REPORTER_FLUSH_INTERVAL, DEFAULT_JAEGER_REPORTER_FLUSH_INTERVAL);
 
-        int senderAgentPortInt = Integer.parseInt(senderAgentPort);
-        boolean logSpans =
-            SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.JAEGER_REPORTER_LOG_SPANS, false);
         int reporterMaxQueueSizeInt = Integer.parseInt(reporterMaxQueueSize);
         int reporterFlushIntervalInt = Integer.parseInt(reporterFlushInterval);
+
+        int senderAgentPortInt = Integer.parseInt(senderAgentPort);
+        boolean logSpans =
+                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.JAEGER_REPORTER_LOG_SPANS, false);
+
 
         OpenTracingManagerHolder.loadJaegerConfigurations(
                 samplerManagerHostPort,
@@ -169,6 +185,18 @@ public abstract class RuntimeStatisticCollector {
 
         OpenTracingManagerHolder.setCollectingFlags(isCollectingPayloads, isCollectingProperties);
     }
+
+    private static void initOpenTracingZipkinClient(boolean isCollectingPayloads, boolean isCollectingProperties) {
+        final String DEFAULT_ZIPKIN_BACKEND_URL = "http://localhost:9411/api/v2/spans";
+
+        // Zipkin Reporter Configurations
+        String zipkinBackendURL = SynapsePropertiesLoader.getPropertyValue(StatisticsConstants.ZIPKIN_BACKEND_URL, DEFAULT_ZIPKIN_BACKEND_URL);
+        OpenTracingManagerHolder.loadZipkinConfigurations(zipkinBackendURL);
+
+        OpenTracingManagerHolder.setCollectingFlags(isCollectingPayloads, isCollectingProperties);
+
+    }
+
 
     /**
      * Set message Id of the message context as statistic trace Id at the beginning of the statistic flow.
