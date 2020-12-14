@@ -123,10 +123,10 @@ public class V2SpanConverter {
     }
 
     /**
-     * Extract peer Endpoint from tags
+     * Extract peer Endpoint from tags.
      *
-     * @param tags tags
-     * @return null or peer endpoint
+     * @param tags tags.
+     * @return null or peer endpoint.
      */
     public static zipkin2.Endpoint extractPeerEndpoint(Map<String, Object> tags) {
         Object peerIpv4 = tags.get(Tags.PEER_HOST_IPV4.getKey());

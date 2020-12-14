@@ -73,7 +73,7 @@ public class TracingScopeManager {
      * Gets the latest tracing scope object.
      * @return  Latest tracing scope object.
      */
-    private synchronized TracingScope getLatestTracingScope() {
+    private TracingScope getLatestTracingScope() {
         synchronized (tracingScopes){
             if (!tracingScopes.isEmpty()) {
                 String[] keys = tracingScopes.keySet().toArray(new String[0]);

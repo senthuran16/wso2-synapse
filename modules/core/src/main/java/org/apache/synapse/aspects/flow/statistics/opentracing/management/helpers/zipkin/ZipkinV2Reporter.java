@@ -21,7 +21,7 @@ import zipkin2.Span;
 import zipkin2.reporter.AsyncReporter;
 
 /**
- * Wrapper around a zipkin v2 AsyncReporter that reports spans using the newer v2 JaegerSpan class
+ * Wrapper around a zipkin v2 AsyncReporter that reports spans using the newer v2 JaegerSpan class.
  */
 public class ZipkinV2Reporter implements Reporter {
     public final AsyncReporter<Span> reporter;

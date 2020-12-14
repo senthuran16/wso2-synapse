@@ -18,7 +18,7 @@ import io.jaegertracing.internal.JaegerSpan;
 import io.opentracing.tag.Tags;
 
 /**
- * Logic that is common to both Thrift v1 and JSON v2 senders
+ * Logic that is common to both Thrift v1 and JSON v2 senders.
  */
 public class ConverterUtil {
     public static boolean isRpcServer(JaegerSpan jaegerSpan) {

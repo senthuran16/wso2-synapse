@@ -75,7 +75,6 @@ public class JaegerTracingManager implements OpenTracingManager {
      *
      * @param reporter Zipkin reporter.
      */
-
     private void initializeTracer(ZipkinV2Reporter reporter) {
         String serviceName = getServiceName();
         this.tracer = new JaegerTracer.Builder(serviceName).withReporter(reporter).build();
