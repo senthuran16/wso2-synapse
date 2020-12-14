@@ -21,15 +21,15 @@ import io.opentracing.tag.Tags;
  * Logic that is common to both Thrift v1 and JSON v2 senders
  */
 public class ConverterUtil {
-  public static boolean isRpcServer(JaegerSpan jaegerSpan) {
-    return Tags.SPAN_KIND_SERVER.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
-  }
+    public static boolean isRpcServer(JaegerSpan jaegerSpan) {
+        return Tags.SPAN_KIND_SERVER.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
+    }
 
-  public static boolean isRpc(JaegerSpan jaegerSpan) {
-    return isRpcServer(jaegerSpan) || isRpcClient(jaegerSpan);
-  }
+    public static boolean isRpc(JaegerSpan jaegerSpan) {
+        return isRpcServer(jaegerSpan) || isRpcClient(jaegerSpan);
+    }
 
-  public static boolean isRpcClient(JaegerSpan jaegerSpan) {
-    return Tags.SPAN_KIND_CLIENT.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
-  }
+    public static boolean isRpcClient(JaegerSpan jaegerSpan) {
+        return Tags.SPAN_KIND_CLIENT.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
+    }
 }

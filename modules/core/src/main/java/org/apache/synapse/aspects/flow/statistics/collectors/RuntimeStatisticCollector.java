@@ -70,9 +70,9 @@ public abstract class RuntimeStatisticCollector {
      */
     public static void init() {
         isMediationFlowStatisticsEnabled =
-                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.STATISTICS_ENABLE, false);
+            SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.STATISTICS_ENABLE, false);
         isOpenTracingEnabled =
-                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.OPENTRACING_ENABLE, false);
+            SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.OPENTRACING_ENABLE, false);
         isStatisticsEnabled = isMediationFlowStatisticsEnabled || isOpenTracingEnabled;
         if (isStatisticsEnabled) {
             if (log.isDebugEnabled()) {
@@ -88,39 +88,37 @@ public abstract class RuntimeStatisticCollector {
                     StatisticsConstants.FLOW_STATISTICS_DEFAULT_EVENT_CONSUME_INTERVAL));
 
             isCollectingPayloads =
-                    SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PAYLOADS, false);
+                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PAYLOADS, false);
 
             if (!isCollectingPayloads && log.isDebugEnabled()) {
                 log.debug("Payload collecting is not enabled in \'synapse.properties\' file.");
             }
 
             isCollectingProperties =
-                    SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PROPERTIES, false);
+                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PROPERTIES, false);
 
             if (!isCollectingProperties && log.isDebugEnabled()) {
                 log.debug("Property collecting is not enabled in \'synapse.properties\' file.");
             }
 
             isCollectingAllStatistics =
-                    SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_ALL_STATISTICS, false);
+                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_ALL_STATISTICS, false);
 
             eventExpireTime =
                     SynapseConfigUtils.getGlobalTimeoutInterval() + SynapseConfigUtils.getTimeoutHandlerInterval() +
-                            eventConsumerTime;
+                    eventConsumerTime;
             log.info("Statistics Entry Expiration time set to " + eventExpireTime + " milliseconds");
             new MediationFlowController();
 
             if (isOpenTracingEnabled) {
-                boolean isZipkinEnabled = SynapsePropertiesLoader.getBooleanProperty(
-                        StatisticsConstants.ENABLE_ZIPKIN, false);
-
+                boolean isZipkinEnabled = SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.ENABLE_ZIPKIN,
+                                                                                     false);
                 if (!isZipkinEnabled) {
                     if (log.isDebugEnabled()) {
                         log.debug("Jaeger client is enabled for traces");
                     }
                     initOpenTracingJaegerClient(isCollectingPayloads, isCollectingProperties);
-                }
-                else {
+                } else {
                     if (log.isDebugEnabled()) {
                         log.debug("Zipkin client is enabled for traces");
                     }
@@ -167,13 +165,11 @@ public abstract class RuntimeStatisticCollector {
                 SynapsePropertiesLoader.getPropertyValue(
                         StatisticsConstants.JAEGER_REPORTER_FLUSH_INTERVAL, DEFAULT_JAEGER_REPORTER_FLUSH_INTERVAL);
 
-        int reporterMaxQueueSizeInt = Integer.parseInt(reporterMaxQueueSize);
-        int reporterFlushIntervalInt = Integer.parseInt(reporterFlushInterval);
-
         int senderAgentPortInt = Integer.parseInt(senderAgentPort);
         boolean logSpans =
-                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.JAEGER_REPORTER_LOG_SPANS, false);
-
+            SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.JAEGER_REPORTER_LOG_SPANS, false);
+        int reporterMaxQueueSizeInt = Integer.parseInt(reporterMaxQueueSize);
+        int reporterFlushIntervalInt = Integer.parseInt(reporterFlushInterval);
 
         OpenTracingManagerHolder.loadJaegerConfigurations(
                 samplerManagerHostPort,
@@ -190,13 +186,13 @@ public abstract class RuntimeStatisticCollector {
         final String DEFAULT_ZIPKIN_BACKEND_URL = "http://localhost:9411/api/v2/spans";
 
         // Zipkin Reporter Configurations
-        String zipkinBackendURL = SynapsePropertiesLoader.getPropertyValue(StatisticsConstants.ZIPKIN_BACKEND_URL, DEFAULT_ZIPKIN_BACKEND_URL);
+        String zipkinBackendURL = SynapsePropertiesLoader.getPropertyValue(StatisticsConstants.ZIPKIN_BACKEND_URL,
+                                                                           DEFAULT_ZIPKIN_BACKEND_URL);
         OpenTracingManagerHolder.loadZipkinConfigurations(zipkinBackendURL);
 
         OpenTracingManagerHolder.setCollectingFlags(isCollectingPayloads, isCollectingProperties);
 
     }
-
 
     /**
      * Set message Id of the message context as statistic trace Id at the beginning of the statistic flow.

@@ -41,5 +41,4 @@ public class ZipkinV2Reporter implements Reporter {
         reporter.close();
     }
 
-
 }

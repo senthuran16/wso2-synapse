@@ -24,9 +24,6 @@ import org.apache.synapse.aspects.flow.statistics.opentracing.management.handlin
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.helpers.zipkin.ZipkinV2Reporter;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.scoping.TracingScopeManager;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-
 /**
  * Coordinates the Jaeger span handler with the tracer.
  */
@@ -61,7 +58,7 @@ public class JaegerTracingManager implements OpenTracingManager {
     /**
      * Initializes the tracer object.
      *
-     * @param sampler  Jaeger sampler configuration.
+     * @param sampler      Jaeger sampler configuration.
      * @param reporterConf Jaeger reporter configuration.
      */
     private void initializeTracer(Configuration.SamplerConfiguration sampler,

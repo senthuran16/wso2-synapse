@@ -40,12 +40,12 @@ public class OpenTracingManagerHolder {
     /**
      * Loads Jaeger configurations required for the OpenTracingManager.
      *
-     * @param samplerManagerHostPort Jaeger sampler host and port.
-     * @param senderAgentHost        Jaeger sender agent host.
-     * @param senderAgentPort        Jaeger sender agent port.
-     * @param logSpans               Log spans in Jaeger reporter or not.
-     * @param reporterMaxQueueSize   Max queue size of the Jaeger reporter.
-     * @param reporterFlushInterval  Flush interval of the Jaeger reporter.
+     * @param samplerManagerHostPort    Jaeger sampler host and port.
+     * @param senderAgentHost           Jaeger sender agent host.
+     * @param senderAgentPort           Jaeger sender agent port.
+     * @param logSpans                  Log spans in Jaeger reporter or not.
+     * @param reporterMaxQueueSize      Max queue size of the Jaeger reporter.
+     * @param reporterFlushInterval     Flush interval of the Jaeger reporter.
      */
     public static void loadJaegerConfigurations(String samplerManagerHostPort,
                                                 String senderAgentHost,
