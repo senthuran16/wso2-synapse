@@ -70,9 +70,9 @@ public abstract class RuntimeStatisticCollector {
      */
     public static void init() {
         isMediationFlowStatisticsEnabled =
-            SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.STATISTICS_ENABLE, false);
+                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.STATISTICS_ENABLE, false);
         isOpenTracingEnabled =
-            SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.OPENTRACING_ENABLE, false);
+                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.OPENTRACING_ENABLE, false);
         isStatisticsEnabled = isMediationFlowStatisticsEnabled || isOpenTracingEnabled;
         if (isStatisticsEnabled) {
             if (log.isDebugEnabled()) {
@@ -88,25 +88,25 @@ public abstract class RuntimeStatisticCollector {
                     StatisticsConstants.FLOW_STATISTICS_DEFAULT_EVENT_CONSUME_INTERVAL));
 
             isCollectingPayloads =
-                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PAYLOADS, false);
+                    SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PAYLOADS, false);
 
             if (!isCollectingPayloads && log.isDebugEnabled()) {
                 log.debug("Payload collecting is not enabled in \'synapse.properties\' file.");
             }
 
             isCollectingProperties =
-                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PROPERTIES, false);
+                    SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_MESSAGE_PROPERTIES, false);
 
             if (!isCollectingProperties && log.isDebugEnabled()) {
                 log.debug("Property collecting is not enabled in \'synapse.properties\' file.");
             }
 
             isCollectingAllStatistics =
-                SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_ALL_STATISTICS, false);
+                    SynapsePropertiesLoader.getBooleanProperty(StatisticsConstants.COLLECT_ALL_STATISTICS, false);
 
             eventExpireTime =
                     SynapseConfigUtils.getGlobalTimeoutInterval() + SynapseConfigUtils.getTimeoutHandlerInterval() +
-                    eventConsumerTime;
+                            eventConsumerTime;
             log.info("Statistics Entry Expiration time set to " + eventExpireTime + " milliseconds");
             new MediationFlowController();
 

@@ -22,9 +22,7 @@ import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.samplers.ConstSampler;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.JaegerTracingManager;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.OpenTracingManager;
-import org.apache.synapse.aspects.flow.statistics.opentracing.management.helpers.zipkin.ZipkinV2Reporter;
-import zipkin2.reporter.AsyncReporter;
-import zipkin2.reporter.urlconnection.URLConnectionSender;
+import org.apache.synapse.aspects.flow.statistics.opentracing.management.helpers.zipkin.ZipkinV2ReporterFactory;
 
 /**
  * Holds the OpenTracing Manager, and configurations related to it.
@@ -42,12 +40,12 @@ public class OpenTracingManagerHolder {
     /**
      * Loads Jaeger configurations required for the OpenTracingManager.
      *
-     * @param samplerManagerHostPort    Jaeger sampler host and port.
-     * @param senderAgentHost           Jaeger sender agent host.
-     * @param senderAgentPort           Jaeger sender agent port.
-     * @param logSpans                  Log spans in Jaeger reporter or not.
-     * @param reporterMaxQueueSize      Max queue size of the Jaeger reporter.
-     * @param reporterFlushInterval     Flush interval of the Jaeger reporter.
+     * @param samplerManagerHostPort Jaeger sampler host and port.
+     * @param senderAgentHost        Jaeger sender agent host.
+     * @param senderAgentPort        Jaeger sender agent port.
+     * @param logSpans               Log spans in Jaeger reporter or not.
+     * @param reporterMaxQueueSize   Max queue size of the Jaeger reporter.
+     * @param reporterFlushInterval  Flush interval of the Jaeger reporter.
      */
     public static void loadJaegerConfigurations(String samplerManagerHostPort,
                                                 String senderAgentHost,
@@ -76,10 +74,8 @@ public class OpenTracingManagerHolder {
      * @param zipkinBackendURL
      */
     public static void loadZipkinConfigurations(String zipkinBackendURL) {
-
-        ZipkinV2Reporter reporter = new ZipkinV2Reporter(AsyncReporter.create(URLConnectionSender
-                .create(zipkinBackendURL)));
-        openTracingManager = new JaegerTracingManager(reporter);
+        ZipkinV2ReporterFactory factory = new ZipkinV2ReporterFactory(zipkinBackendURL);
+        openTracingManager = new JaegerTracingManager(factory.getReporter());
     }
 
     /**
