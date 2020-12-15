@@ -44,11 +44,14 @@ public class V2SpanConverter {
         zipkin2.Endpoint peerEndpoint = extractPeerEndpoint(span.getTags());
 
         JaegerSpanContext context = span.context();
-        Span.Builder builder = Span.newBuilder().id(Long.toHexString(context.getSpanId())).traceId(
-                context.getTraceIdHigh(), context.getTraceIdLow()).name(span.getOperationName()).parentId(
-                Long.toHexString(context.getParentId())).debug(context.isDebug()).localEndpoint(host.build())
-                .remoteEndpoint(peerEndpoint).kind(convertKind(span.getTags().get(Tags.SPAN_KIND.getKey()))).timestamp(
-                        span.getStart()).duration(span.getDuration());
+        Span.Builder builder = Span.newBuilder().id(Long.toHexString(context.getSpanId()))
+                .traceId(context.getTraceIdHigh(), context.getTraceIdLow())
+                .name(span.getOperationName()).parentId(Long.toHexString(context.getParentId()))
+                .debug(context.isDebug())
+                .localEndpoint(host.build())
+                .remoteEndpoint(peerEndpoint)
+                .kind(convertKind(span.getTags().get(Tags.SPAN_KIND.getKey())))
+                .timestamp(span.getStart()).duration(span.getDuration());
 
         buildAnnotations(span, builder);
         buildTags(span, builder);
@@ -110,7 +113,7 @@ public class V2SpanConverter {
                 // work well with ints, and bytes.
                 Object tagValue = entry.getValue();
 
-                if ((!"".equals(tagKey) || tagKey != null) && tagValue != null) {
+                if ((tagKey != null || !tagKey.isEmpty()) && tagValue != null) {
                     builder.putTag(tagKey, tagValue.toString());
                 }
             }

@@ -22,7 +22,11 @@ import io.opentracing.tag.Tags;
  */
 public class ConverterUtil {
     public static boolean isRpcServer(JaegerSpan jaegerSpan) {
-        return Tags.SPAN_KIND_SERVER.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
+        if (jaegerSpan.getTags() != null) {
+            return Tags.SPAN_KIND_SERVER.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
+        } else {
+            return false;
+        }
     }
 
     public static boolean isRpc(JaegerSpan jaegerSpan) {
@@ -30,6 +34,10 @@ public class ConverterUtil {
     }
 
     public static boolean isRpcClient(JaegerSpan jaegerSpan) {
-        return Tags.SPAN_KIND_CLIENT.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
+        if (jaegerSpan.getTags() != null) {
+            return Tags.SPAN_KIND_CLIENT.equals(jaegerSpan.getTags().get(Tags.SPAN_KIND.getKey()));
+        } else {
+            return false;
+        }
     }
 }
