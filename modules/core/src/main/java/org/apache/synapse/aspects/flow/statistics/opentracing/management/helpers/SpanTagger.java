@@ -51,8 +51,12 @@ public class SpanTagger {
 
                 if (OpenTracingManagerHolder.isCollectingPayloads()) {
                     statisticsLog.setAfterPayload(endEventDataUnit.getPayload());
-                    span.setTag("beforePayload", statisticsLog.getBeforePayload());
-                    span.setTag("afterPayload", statisticsLog.getAfterPayload());
+                    if(statisticsLog.getBeforePayload() != null){
+                        span.setTag("beforePayload", statisticsLog.getBeforePayload());
+                    }
+                    if(statisticsLog.getAfterPayload() != null){
+                        span.setTag("afterPayload", statisticsLog.getAfterPayload());
+                    }
                 }
 
                 if (OpenTracingManagerHolder.isCollectingProperties()) {
@@ -66,11 +70,19 @@ public class SpanTagger {
                 }
             }
 
-            span.setTag("componentName", statisticsLog.getComponentName());
-            span.setTag("componentType", statisticsLog.getComponentTypeToString());
+            if (statisticsLog.getComponentName() != null) {
+                span.setTag("componentName", statisticsLog.getComponentName());
+            }
+            if(statisticsLog.getComponentTypeToString() != null){
+                span.setTag("componentType", statisticsLog.getComponentTypeToString());
+            }
             span.setTag("threadId", Thread.currentThread().getId());
-            span.setTag("componentId", statisticsLog.getComponentId());
-            span.setTag("hashcode", statisticsLog.getHashCode());
+            if(statisticsLog.getComponentId() != null){
+                span.setTag("componentId", statisticsLog.getComponentId());
+            }
+            if(statisticsLog.getHashCode() != null){
+                span.setTag("hashcode", statisticsLog.getHashCode());
+            }
         }
     }
 }

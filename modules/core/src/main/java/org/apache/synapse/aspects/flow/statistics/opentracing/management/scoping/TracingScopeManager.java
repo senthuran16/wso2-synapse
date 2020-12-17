@@ -74,14 +74,18 @@ public class TracingScopeManager {
      * @return  Latest tracing scope object.
      */
     private TracingScope getLatestTracingScope() {
-        if (!tracingScopes.isEmpty()) {
-            String[] keys = tracingScopes.keySet().toArray(new String[0]);
-            return tracingScopes.get(keys[keys.length - 1]);
+        synchronized (tracingScopes){
+            if (!tracingScopes.isEmpty()) {
+                String[] keys = tracingScopes.keySet().toArray(new String[0]);
+                return tracingScopes.get(keys[keys.length - 1]);
+            }
+            return null;
         }
-        return null;
     }
 
     public void cleanupTracingScope(String tracingScopeId) {
-        tracingScopes.remove(tracingScopeId);
+        synchronized (tracingScopes){
+            tracingScopes.remove(tracingScopeId);
+        }
     }
 }
