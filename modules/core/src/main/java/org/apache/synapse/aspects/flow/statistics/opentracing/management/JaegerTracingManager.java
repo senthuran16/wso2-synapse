@@ -20,8 +20,8 @@ package org.apache.synapse.aspects.flow.statistics.opentracing.management;
 
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.zipkin.ZipkinV2Reporter;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.handling.span.JaegerSpanHandler;
-import org.apache.synapse.aspects.flow.statistics.opentracing.management.helpers.zipkin.ZipkinV2Reporter;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.scoping.TracingScopeManager;
 
 /**

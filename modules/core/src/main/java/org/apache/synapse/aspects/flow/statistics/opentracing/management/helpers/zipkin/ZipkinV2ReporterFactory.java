@@ -18,6 +18,7 @@
 
 package org.apache.synapse.aspects.flow.statistics.opentracing.management.helpers.zipkin;
 
+import io.jaegertracing.zipkin.ZipkinV2Reporter;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.urlconnection.URLConnectionSender;
 

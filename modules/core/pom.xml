@@ -416,6 +416,10 @@
 		</dependency>
 		<!-- Zipkin Tracing -->
 		<dependency>
+			<groupId>io.jaegertracing</groupId>
+			<artifactId>jaeger-zipkin</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.zipkin.reporter2</groupId>
 			<artifactId>zipkin-sender-urlconnection</artifactId>
 		</dependency>
