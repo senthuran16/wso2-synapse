@@ -20,14 +20,12 @@
 package org.apache.synapse.config.xml;
 
 import org.apache.axiom.om.OMElement;
-import org.apache.axiom.om.impl.llom.OMTextImpl;
 import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.synapse.Mediator;
 import org.apache.synapse.mediators.transform.Argument;
 import org.apache.synapse.mediators.transform.PayloadFactoryMediator;
 
 import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import java.util.List;
 
@@ -40,16 +38,14 @@ public class PayloadFactoryMediatorSerializer extends AbstractMediatorSerializer
     private static final String VALUE = "value";
     private static final String EXPRESSION = "expression";
     private static final String EVALUATOR = "evaluator";
-    private final String JSON_TYPE = "json";
-    private final String MEDIA_TYPE = "media-type";
-    private final String TEMPLATE_TYPE = "template-type";
-    private final String ESCAPE_XML_CHARS = "escapeXmlChars";
+    private final String JSON_TYPE="json";
+    private final String MEDIA_TYPE="media-type";
+    private final String ESCAPE_XML_CHARS="escapeXmlChars";
 
     private final String XML = "xml";
     private final String JSON = "json";
     private final String TEXT = "text";
     private final String LITERAL = "literal";
-    private final String FREEMARKER = "freemarker";
 
     private String getEvaluator(String pathType) {
         if(pathType == SynapsePath.JSON_PATH) {
@@ -74,10 +70,6 @@ public class PayloadFactoryMediatorSerializer extends AbstractMediatorSerializer
             payloadFactoryElem.addAttribute(fac.createOMAttribute(MEDIA_TYPE,null,mediator.getType()));
         }
 
-        if (isFreeMarkerTemplate(mediator)) {
-            payloadFactoryElem.addAttribute(fac.createOMAttribute(TEMPLATE_TYPE, null, FREEMARKER));
-        }
-
         if (mediator.isEscapeXmlChars()) {
             payloadFactoryElem.addAttribute(fac.createOMAttribute(ESCAPE_XML_CHARS,null,
                     Boolean.toString(mediator.isEscapeXmlChars())));
@@ -91,18 +83,10 @@ public class PayloadFactoryMediatorSerializer extends AbstractMediatorSerializer
                 try {
                     OMElement formatElem = fac.createOMElement(FORMAT, synNS);
                 String type = mediator.getType();
-                if (type != null && (type.contains(JSON_TYPE) || type.contains(TEXT))) {
-                    if (isFreeMarkerTemplate(mediator)) {
-                        createCdataTag(mediator, formatElem);
-                    } else {
-                        formatElem.setText(mediator.getFormat());
-                    }
-                } else {
-                    if (isFreeMarkerTemplate(mediator)) {
-                        createCdataTag(mediator, formatElem);
-                    } else {
-                        formatElem.addChild(AXIOMUtil.stringToOM(mediator.getFormat()));
-                    }
+                if(type!=null && (type.contains(JSON_TYPE) || type.contains(TEXT))) {
+                     formatElem.setText(mediator.getFormat());
+                } else{
+                    formatElem.addChild(AXIOMUtil.stringToOM(mediator.getFormat()));
                 }
                     payloadFactoryElem.addChild(formatElem);
                 } catch (XMLStreamException e) {
@@ -123,7 +107,7 @@ public class PayloadFactoryMediatorSerializer extends AbstractMediatorSerializer
         }
 
         OMElement argumentsElem = fac.createOMElement(ARGS, synNS);
-        List<Argument> pathArgList = mediator.getTemplateProcessor().getPathArgumentList();
+        List<Argument> pathArgList = mediator.getPathArgumentList();
 
         if (null != pathArgList && pathArgList.size() > 0) {
 
@@ -162,33 +146,6 @@ public class PayloadFactoryMediatorSerializer extends AbstractMediatorSerializer
         serializeComments(payloadFactoryElem, mediator.getCommentsList());
 
         return payloadFactoryElem;
-    }
-
-    private void createCdataTag(PayloadFactoryMediator mediator, OMElement formatElem) {
-
-        String formatString = mediator.getFormat();
-        formatString = removeCDATAFromPayload(formatString);
-        OMTextImpl omText = (OMTextImpl) formatElem.getOMFactory().createOMText(formatElem, formatString,
-                XMLStreamConstants.CDATA);
-        formatElem.addChild(omText);
-    }
-
-    private boolean isFreeMarkerTemplate(PayloadFactoryMediator mediator) {
-
-        return mediator.getTemplateType() != null && mediator.getTemplateType().equalsIgnoreCase(FREEMARKER);
-    }
-
-    public static String removeCDATAFromPayload(String inputPayload) {
-        if (inputPayload.startsWith("<![CDATA[")) {
-            inputPayload = inputPayload.substring(9);
-            int i = inputPayload.lastIndexOf("]]>");
-            if (i == -1) {
-                throw new IllegalStateException("argument starts with <![CDATA[ but cannot find pairing ]]>");
-            }
-            inputPayload = inputPayload.substring(0, i);
-        }
-
-        return inputPayload;
     }
 
     public String getMediatorClassName() {

@@ -24,7 +24,6 @@ import junit.framework.TestCase;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.mediators.TestUtils;
 import org.apache.synapse.mediators.transform.PayloadFactoryMediator;
-import org.apache.synapse.mediators.transform.pfutils.RegexTemplateProcessor;
 import java.util.ArrayList;
 
 public class EnrichMediatorTest extends TestCase {
@@ -59,7 +58,6 @@ public class EnrichMediatorTest extends TestCase {
 		assertEquals(expectedPropVal, ((ArrayList) msgCtxt1.getProperty(key)).get(0).toString());
 
 		PayloadFactoryMediator payloadFacMediator = new PayloadFactoryMediator();
-		payloadFacMediator.setTemplateProcessor(new RegexTemplateProcessor());
 		payloadFacMediator.setType("xml");
 		payloadFacMediator.setFormat(format);
 		payloadFacMediator.mediate(msgCtxt1);
@@ -106,7 +104,6 @@ public class EnrichMediatorTest extends TestCase {
 		assertEquals(expectedPropVal, ((ArrayList) msgCtxt1.getProperty(key)).get(0).toString());
 
 		PayloadFactoryMediator payloadFacMediator = new PayloadFactoryMediator();
-		payloadFacMediator.setTemplateProcessor(new RegexTemplateProcessor());
 		payloadFacMediator.setType("xml");
 		payloadFacMediator.setFormat(format);
 		payloadFacMediator.mediate(msgCtxt1);
