@@ -90,7 +90,7 @@ public class PayloadFactoryMediatorFactory extends AbstractMediatorFactory {
                         (mediaTypeValue.contains(JSON_TYPE) || mediaTypeValue.contains(TEXT_TYPE))) {
                     if (isFreeMarkerTemplate(payloadFactoryMediator)) {
                         format = PayloadFactoryMediatorSerializer.removeCDATAFromPayload(copy.getText());
-                    }else {
+                    } else {
                         format = copy.getText();
                     }
                 } else {
@@ -184,8 +184,7 @@ public class PayloadFactoryMediatorFactory extends AbstractMediatorFactory {
 
     private boolean isFreeMarkerTemplate(PayloadFactoryMediator payloadFactoryMediator) {
 
-        return payloadFactoryMediator.getTemplateType() != null &&
-                payloadFactoryMediator.getTemplateType().equalsIgnoreCase(FREEMARKER_TEMPLATE_TYPE);
+        return FREEMARKER_TEMPLATE_TYPE.equalsIgnoreCase(payloadFactoryMediator.getTemplateType());
     }
 
     private TemplateProcessor getTemplateProcessor(OMElement elem, PayloadFactoryMediator payloadFactoryMediator) {
