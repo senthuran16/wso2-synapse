@@ -311,7 +311,7 @@ public class Axis2SynapseEnvironment implements SynapseEnvironment {
 
             // if this is not a response to a proxy service
             String proxyName = (String) synCtx.getProperty(SynapseConstants.PROXY_SERVICE);
-            if (proxyName == null || "".equals(proxyName)) {
+            if (proxyName == null || "".equals(proxyName)) { // TODO senthuran: API case is handled here
                 // set default fault handler
                 synCtx.pushFaultHandler(new MediatorFaultHandler(synCtx.getFaultSequence()));
                 if (receivingSequence != null) {

@@ -49,7 +49,18 @@ public class ResourceFactory {
         configureURLMappings(resource, resourceElt);
         configureSequences(resource, resourceElt, properties);
         configureFilters(resource, resourceElt);
+        addBindToEndpointNames(resource, resourceElt);
         return resource;
+    }
+
+    private static void addBindToEndpointNames(Resource resource, OMElement resourceElt) {
+        OMAttribute bindTo = resourceElt.getAttribute(new QName("binds-to")); // TODO introduce a const
+        if (bindTo != null) {
+            String[] bindToEndpointNames = bindTo.getAttributeValue().split(",");
+            for (String endpointName : bindToEndpointNames) {
+                resource.addInboundEndpointBinding(endpointName.trim());
+            }
+        }
     }
 
     private static void configureFilters(Resource resource, OMElement resourceElt) {

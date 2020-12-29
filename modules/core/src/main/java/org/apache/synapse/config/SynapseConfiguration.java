@@ -68,9 +68,6 @@ import org.apache.synapse.registry.Registry;
 import org.apache.synapse.rest.API;
 import org.apache.synapse.startup.quartz.StartUpController;
 import org.apache.synapse.task.TaskManager;
-import org.apache.synapse.util.xpath.ext.SynapseXpathFunctionContextProvider;
-import org.apache.synapse.util.xpath.ext.SynapseXpathVariableResolver;
-import org.apache.synapse.util.xpath.ext.XpathExtensionUtil;
 
 import javax.xml.namespace.QName;
 import java.io.IOException;
@@ -195,7 +192,11 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     private Map<String, API> apiTable = Collections.synchronizedMap(new LinkedHashMap<String, API>());
 
     private Map<String, InboundEndpoint> inboundEndpointMap = new ConcurrentHashMap<String, InboundEndpoint>();
-    
+
+    private Map<String, Map<String, API>> apiLevelInboundApiMappings = new ConcurrentHashMap<>();
+
+    private Map<String, Map<String, API>> resourceLevelInboundApiMappings = new ConcurrentHashMap<>();
+
     /**
      * Description/documentation of the configuration
      */
@@ -414,23 +415,66 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         addAPI(name, api, true);
     }
     
-    public synchronized void addAPI(String name, API api, boolean reOrder) {
-        if (!apiTable.containsKey(name)) {
-            for (API existingAPI : apiTable.values()) {
-                if (api.getVersion().equals(existingAPI.getVersion()) && existingAPI.getContext().equals(api.getContext())) {
-                    handleException("URL context: " + api.getContext() + " is already registered" +
-                                    " with the API: " + existingAPI.getName());
+    public synchronized void addAPI(String name, API api, boolean reOrder) { // TODO senthuran: API mapping is added here
+        List<String> apiLevelInboundEndpointBindings = api.getApiLevelInboundEndpointBindings();
+        List<String> resourceLevelInboundEndpointBindings = api.getResourceLevelInboundEndpointBindings();
+        if (apiLevelInboundEndpointBindings.isEmpty() && resourceLevelInboundEndpointBindings.isEmpty()) {
+            // No bindings specified. Expose this API
+            if (!apiTable.containsKey(name)) {
+                for (API existingAPI : apiTable.values()) {
+                    if (api.getVersion().equals(existingAPI.getVersion()) && existingAPI.getContext().equals(api.getContext())) {
+                        handleException("URL context: " + api.getContext() + " is already registered" +
+                                " with the API: " + existingAPI.getName());
+                    }
                 }
-            }
-            apiTable.put(name, api);
-            if (reOrder) {
-                reconstructAPITable();
-            }
-            for (SynapseObserver o : observers) {
-                o.apiAdded(api);
+                apiTable.put(name, api);
+                if (reOrder) {
+                    reconstructAPITable();
+                }
+                for (SynapseObserver o : observers) {
+                    o.apiAdded(api);
+                }
+            } else {
+                handleException("Duplicate resource definition by the name: " + name);
             }
         } else {
-            handleException("Duplicate resource definition by the name: " + name);
+            // Inbound API                                                              // TODO this seems to hit twice for the same API
+
+            // API level bindings
+            for (String inboundEndpointName : apiLevelInboundEndpointBindings) {
+                if (apiLevelInboundApiMappings.containsKey(inboundEndpointName)) {
+                    Map<String, API> apis = apiLevelInboundApiMappings.get(inboundEndpointName);
+                    if (!apis.containsKey(name)) {
+                        apis.put(name, api);
+                    } else {
+                        Object o = null;
+                        // TODO figure out why does this get hit more than once
+                    }
+                } else {
+                    Map<String, API> apis = new ConcurrentHashMap<>();
+                    apis.put(name, api);
+                    apiLevelInboundApiMappings.put(inboundEndpointName, apis);
+                }
+            }
+
+            // Resource level bindings (implicit bindings)
+            // TODO get rid of this 'implicit' term
+            // TODO can reuse the same logic for both explicit & implicit map populations
+            for (String inboundEndpointName : resourceLevelInboundEndpointBindings) {
+                if (resourceLevelInboundApiMappings.containsKey(inboundEndpointName)) {
+                    Map<String, API> apis = resourceLevelInboundApiMappings.get(inboundEndpointName);
+                    if (!apis.containsKey(name)) {
+                        apis.put(name, api);
+                    } else {
+                        Object o = null;
+                        // TODO figure out why does this get hit more than once
+                    }
+                } else {
+                    Map<String, API> apis = new ConcurrentHashMap<>();
+                    apis.put(name, api);
+                    resourceLevelInboundApiMappings.put(inboundEndpointName, apis);
+                }
+            }
         }
     }
 
@@ -1353,6 +1397,14 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         this.properties = properties;
     }
 
+    public Map<String, Map<String, API>> getApiLevelInboundApiMappings() {
+        return apiLevelInboundApiMappings;
+    }
+
+    public Map<String, Map<String, API>> getResourceLevelInboundApiMappings() {
+        return resourceLevelInboundApiMappings;
+    }
+
     /**
      * Gets the String representation of the property value if there is a property for the
      * given propKey or returns the default value passed
@@ -1659,13 +1711,55 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
 
         for (API api : apiTable.values()) {
 			try {
-				api.init(se);
+				api.init(se); // TODO Check whether API is initted here or not
 			} catch (Exception e) {
 				log.error(" Error in initializing API [ " + api.getName()
 						+ "] " + e.getMessage());
 			}
         }
+
+        initInboundApis(se);
         initImportedLibraries(se);
+    }
+
+    private void initInboundApis(SynapseEnvironment synapseEnvironment) { // TODO handle destroys and all
+        for (Map<String, API> apis : apiLevelInboundApiMappings.values()) {
+            for (Map.Entry<String, API> apiEntry : apis.entrySet()) {
+                try {
+                    apiEntry.getValue().init(synapseEnvironment);
+                } catch (Exception e) {
+                    log.error(" Error in initializing inbound API [ " + apiEntry.getKey()+ "] " + e.getMessage());
+                }
+            }
+        }
+
+        // Init implicit bindings
+        for (Map<String, API> apis : resourceLevelInboundApiMappings.values()) {
+            for (Map.Entry<String, API> apiEntry : apis.entrySet()) {
+                try {
+                    apiEntry.getValue().init(synapseEnvironment);
+                } catch (Exception e) {
+                    log.error(" Error in initializing inbound API [ " + apiEntry.getKey()+ "] " + e.getMessage());
+                }
+            }
+        }
+
+
+
+//        List<String> initializedInboundApiNames = new ArrayList<>();
+//        for (List<API> inboundApis : inboundAPIMappingMap.values()) {
+//            for (API api : inboundApis) {
+//                if (!initializedInboundApiNames.contains(api.getName())) {
+//                    try {
+//                        api.init(synapseEnvironment);
+//                        initializedInboundApiNames.add(api.getName());
+//                    } catch (Exception e) {
+//                        log.error(" Error in initializing inbound API [ " + api.getName()
+//                                + "] " + e.getMessage());
+//                    }
+//                }
+//            }
+//        }
     }
 
     private void handleException(String msg) {

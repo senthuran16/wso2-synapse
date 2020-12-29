@@ -74,7 +74,11 @@ public class RESTRequestHandler {
     }
 
     private boolean dispatchToAPI(MessageContext synCtx) {
-        Collection<API> apiSet = synCtx.getEnvironment().getSynapseConfiguration().getAPIs();
+        Collection<API> apiSet = synCtx.getEnvironment().getSynapseConfiguration().getAPIs(); // TODO my map shd be taken here, in InboundReqHandler
+        return dispatchToAPI(apiSet, synCtx);
+    }
+
+    protected boolean dispatchToAPI(Collection<API> apiSet, MessageContext synCtx) {
         //Since swapping elements are not possible with sets, Collection is converted to a List
         List<API> defaultStrategyApiSet = new ArrayList<API>(apiSet);
         API defaultAPI = null;
@@ -119,7 +123,7 @@ public class RESTRequestHandler {
 		return false;
 	}
 
-	private void apiProcess(MessageContext synCtx, API api) {
+	protected void apiProcess(MessageContext synCtx, API api) {
         Integer statisticReportingIndex = 0;
         if (RuntimeStatisticCollector.isStatisticsEnabled()) {
             statisticReportingIndex = OpenEventCollector
@@ -132,7 +136,7 @@ public class RESTRequestHandler {
     }
 
     //Process APIs which have context or url strategy
-    private void apiProcessNonDefaultStrategy(MessageContext synCtx, API api) {
+    protected void apiProcessNonDefaultStrategy(MessageContext synCtx, API api) {
         Integer statisticReportingIndex = 0;
         if (RuntimeStatisticCollector.isStatisticsEnabled()) {
             statisticReportingIndex = OpenEventCollector
@@ -145,7 +149,7 @@ public class RESTRequestHandler {
         }
     }
 
-    private boolean identifyAPI(API api, MessageContext synCtx, List defaultStrategyApiSet) {
+    protected boolean identifyAPI(API api, MessageContext synCtx, List defaultStrategyApiSet) {
         API defaultAPI = null;
         api.setLogSetterValue();
         if ("/".equals(api.getContext())) {

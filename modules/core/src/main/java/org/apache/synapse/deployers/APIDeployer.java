@@ -57,7 +57,7 @@ public class APIDeployer extends AbstractSynapseArtifactDeployer {
                 if (log.isDebugEnabled()) {
                     log.debug("Initialized the API: " + api.getName());
                 }
-                getSynapseConfiguration().addAPI(api.getName(), api);
+                getSynapseConfiguration().addAPI(api.getName(), api); // TODO senthuran: api is added here
                 if (log.isDebugEnabled()) {
                     log.debug("API deployment from file : " + fileName + " : Completed");
                 }

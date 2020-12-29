@@ -44,9 +44,7 @@ import org.apache.synapse.rest.cors.CORSHelper;
 import org.apache.synapse.rest.dispatch.DispatcherHelper;
 import org.apache.synapse.transport.nhttp.NhttpConstants;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Resource extends AbstractRESTProcessor implements ManagedLifecycle, AspectConfigurable {
 
@@ -81,6 +79,8 @@ public class Resource extends AbstractRESTProcessor implements ManagedLifecycle,
     private String outSequenceKey;
 
     private String faultSequenceKey;
+
+    private List<String> inboundEndpointBindings = new ArrayList<>();
 
     /**
      * DispatcherHelper instance which is  used to determine whether a particular resource
@@ -142,6 +142,14 @@ public class Resource extends AbstractRESTProcessor implements ManagedLifecycle,
 
     public void setFaultSequenceKey(String faultSequenceKey) {
         this.faultSequenceKey = faultSequenceKey;
+    }
+
+    public List<String> getInboundEndpointBindings() {
+        return inboundEndpointBindings;
+    }
+
+    public void addInboundEndpointBinding(String inboundEndpointName) {
+        inboundEndpointBindings.add(inboundEndpointName);
     }
 
     public boolean addMethod(String method) {

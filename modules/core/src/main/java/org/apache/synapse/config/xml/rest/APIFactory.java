@@ -154,7 +154,21 @@ public class APIFactory {
             }
         }
         CommentListUtil.populateComments(apiElt, api.getCommentsList());
+
+        addBindToEndpointNames(api, apiElt);
+
         return api;
+    }
+
+    private static void addBindToEndpointNames(API api, OMElement apiElt) {
+        OMAttribute bindTo = apiElt.getAttribute(new QName("binds-to")); // TODO introduce a const
+        if (bindTo != null) {
+            String[] bindToEndpointNames = bindTo.getAttributeValue().split(",");
+            for (String endpointName : bindToEndpointNames) {
+                api.addApiLevelInboundEndpointBinding(endpointName.trim());
+            }
+        }
+
     }
 
     private static void defineHandler(API api, OMElement handlerElt) {

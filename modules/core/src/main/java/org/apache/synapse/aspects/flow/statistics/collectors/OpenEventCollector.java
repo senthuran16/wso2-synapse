@@ -151,6 +151,10 @@ public class OpenEventCollector extends RuntimeStatisticCollector {
 		return null;
 	}
 
+	public static void reportEntryWithPropertyCtx() {
+
+	}
+
 	/**
 	 * Enqueue StatisticOpenEvent to the event Queue. This receives open events from Flow Continuable Mediators. These
 	 * components can't start statistic collection. If statistics is already enabled, it will enqueue open event to

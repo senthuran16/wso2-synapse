@@ -18,28 +18,25 @@
 
 package org.apache.synapse.rest;
 
-import org.apache.axis2.Constants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.SynapseException;
+import org.apache.synapse.api.ApiUtils;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.dispatch.RESTDispatcher;
 import org.apache.synapse.rest.dispatch.DefaultDispatcher;
 import org.apache.synapse.rest.dispatch.URLMappingBasedDispatcher;
 import org.apache.synapse.rest.dispatch.URITemplateBasedDispatcher;
-import org.apache.synapse.transport.nhttp.NhttpConstants;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RESTUtils {
+public class RESTUtils { // TODO move everthing to ApiUtils
 
     private static final Log log = LogFactory.getLog(RESTUtils.class);
 
@@ -68,28 +65,9 @@ public class RESTUtils {
         return url;
     }
 
+    @Deprecated // TODO comment properly
     public static String getFullRequestPath(MessageContext synCtx) {
-        Object obj = synCtx.getProperty(RESTConstants.REST_FULL_REQUEST_PATH);
-        if (obj != null) {
-            return (String) obj;
-        }
-
-        org.apache.axis2.context.MessageContext msgCtx = ((Axis2MessageContext) synCtx).
-                getAxis2MessageContext();
-        String url = (String) msgCtx.getProperty(Constants.Configuration.TRANSPORT_IN_URL);
-        if (url == null) {
-            url = (String) synCtx.getProperty(NhttpConstants.SERVICE_PREFIX);
-        }
-
-        if (url.startsWith("http://") || url.startsWith("https://")) {
-            try {
-                url = new URL(url).getFile();
-            } catch (MalformedURLException e) {
-                handleException("Request URL: " + url + " is malformed", e);
-            }
-        }
-        synCtx.setProperty(RESTConstants.REST_FULL_REQUEST_PATH, url);
-        return url;
+        return ApiUtils.getFullRequestPath(synCtx);
     }
 
     /**

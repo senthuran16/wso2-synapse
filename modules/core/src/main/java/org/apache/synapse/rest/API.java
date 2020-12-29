@@ -28,6 +28,7 @@ import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseArtifact;
 import org.apache.synapse.SynapseConstants;
+import org.apache.synapse.api.ApiUtils;
 import org.apache.synapse.aspects.AspectConfigurable;
 import org.apache.synapse.aspects.AspectConfiguration;
 import org.apache.synapse.aspects.ComponentType;
@@ -65,6 +66,8 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
     private Map<String,Resource> resources = new LinkedHashMap<String,Resource>();
     private List<Handler> handlers = new ArrayList<Handler>();
     private String swaggerResourcePath;
+    private List<String> apiLevelInboundEndpointBindings = new ArrayList<>();
+    private List<String> resourceLevelInboundEndpointBindings = new ArrayList<>(); // Comes from a resource
 
     /**
      * The Api description. This could be optional informative text about the Api.
@@ -220,6 +223,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
             }
         }
         resources.put(resource.getName(), resource);
+        resourceLevelInboundEndpointBindings.addAll(resource.getInboundEndpointBindings());
     }
 
     private boolean resourceMatches(Resource r1, Resource r2) {
@@ -247,6 +251,18 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
         return handlers.toArray(new Handler[handlers.size()]);
     }
 
+    public void addApiLevelInboundEndpointBinding(String inboundEndpointName) {
+        apiLevelInboundEndpointBindings.add(inboundEndpointName);
+    }
+
+    public List<String> getApiLevelInboundEndpointBindings() {
+        return apiLevelInboundEndpointBindings;
+    }
+
+    public List<String> getResourceLevelInboundEndpointBindings() {
+        return resourceLevelInboundEndpointBindings;
+    }
+
     boolean canProcess(MessageContext synCtx) {
         if (synCtx.isResponse()) {
             String apiName = (String) synCtx.getProperty(RESTConstants.SYNAPSE_REST_API);
@@ -257,7 +273,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                 return false;
             }
         } else {
-            String path = RESTUtils.getFullRequestPath(synCtx);
+            String path = ApiUtils.getFullRequestPath(synCtx);
             if (null == synCtx.getProperty(RESTConstants.IS_PROMETHEUS_ENGAGED) &&
                     (!RESTUtils.matchApiPath(path, context))) {
                 auditDebug("API context: " + context + " does not match request URI: " + path);
@@ -383,7 +399,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
             if (resourceName != null) {
                 Resource resource = resources.get(resourceName);
                 if (resource != null) {
-                    resource.process(synCtx);
+                    resource.process(synCtx); // TODO is it applicable?
                 }
             } else if (log.isDebugEnabled()) {
                 auditDebug("No resource information on the response: " + synCtx.getMessageID());
@@ -391,7 +407,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
             return;
         }
 
-        String path = RESTUtils.getFullRequestPath(synCtx);
+        String path = ApiUtils.getFullRequestPath(synCtx);
         String subPath;
         if (versionStrategy.getVersionType().equals(VersionStrategyFactory.TYPE_URL)) {
             //for URL based
@@ -444,7 +460,9 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                         }
 
                     }
-                    resource.process(synCtx);
+                    if (isAllowedToProcess(resource, synCtx)) {
+                        resource.process(synCtx); // TODO block/allow resource here
+                    }
                     return;
                 }
             }
@@ -475,6 +493,23 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                 msgCtx.setProperty("NIO-ACK-Requested", true);
             }
         }
+    }
+
+    private boolean isAllowedToProcess(Resource resource, MessageContext synCtx) {
+        Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
+        if (inboundEndpointName != null) {
+            String endpointName = inboundEndpointName.toString();
+            if (resource.getInboundEndpointBindings().isEmpty()) {
+                // Resource level bindings are not present.
+                // Allow if this API has: either no bindings, or API level binding to this inbound endpoint name.
+                return (apiLevelInboundEndpointBindings.isEmpty() && resourceLevelInboundEndpointBindings.isEmpty()) ||
+                        apiLevelInboundEndpointBindings.contains(endpointName);
+            }
+
+            // Resource level bindings are present, allow if it contains this inbound endpoint name.
+            return resource.getInboundEndpointBindings().contains(endpointName);
+        }
+        return true;
     }
 
     /**
