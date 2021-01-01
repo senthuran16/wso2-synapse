@@ -31,7 +31,7 @@ import java.util.List;
 public class RESTUtils {
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#trimSlashes(String)}
+     * @deprecated  Replaced by {@link ApiUtils#trimSlashes(String)}
      */
     @Deprecated
     public static String trimSlashes(String url) {
@@ -39,7 +39,7 @@ public class RESTUtils {
     }
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#trimTrailingSlashes(String)}
+     * @deprecated  Replaced by {@link ApiUtils#trimTrailingSlashes(String)}
      */
     @Deprecated
     public static String trimTrailingSlashes(String url) {
@@ -47,7 +47,7 @@ public class RESTUtils {
     }
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#getFullRequestPath(MessageContext)}
+     * @deprecated  Replaced by {@link ApiUtils#getFullRequestPath(MessageContext)}
      */
     @Deprecated
     public static String getFullRequestPath(MessageContext synCtx) {
@@ -55,7 +55,11 @@ public class RESTUtils {
     }
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#populateQueryParamsToMessageContext(MessageContext)}
+     * Populate Message context properties for the query parameters extracted from the url
+     *
+     * @param synCtx MessageContext of the request
+     *
+     * @deprecated  Replaced by {@link ApiUtils#populateQueryParamsToMessageContext(MessageContext)}
      */
     @Deprecated
     public static void populateQueryParamsToMessageContext(MessageContext synCtx) {
@@ -63,7 +67,7 @@ public class RESTUtils {
     }
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#getSubRequestPath(MessageContext)}
+     * @deprecated  Replaced by {@link ApiUtils#getSubRequestPath(MessageContext)}
      */
     @Deprecated
     public static String getSubRequestPath(MessageContext synCtx) {
@@ -71,7 +75,7 @@ public class RESTUtils {
     }
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#getDispatchers()}
+     * @deprecated  Replaced by {@link ApiUtils#getDispatchers()}
      */
     @Deprecated
     public static List<RESTDispatcher> getDispatchers() {
@@ -79,7 +83,15 @@ public class RESTUtils {
     }
 
     /**
-     * @deprecated Replaced by {@link ApiUtils#matchApiPath(String, String)}
+     * Identify the API by matching the context of the invoking api
+     * with the path of each api in the api list.
+     *
+     * @param path    request path
+     * @param context API context
+     * @return true if the invoking api context matches with the path
+     * and false if the two values don't match
+     *
+     * @deprecated  Replaced by {@link ApiUtils#matchApiPath(String, String)}
      */
     @Deprecated
     public static boolean matchApiPath(String path, String context) {
