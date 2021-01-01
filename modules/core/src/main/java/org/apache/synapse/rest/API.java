@@ -67,7 +67,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
     private List<Handler> handlers = new ArrayList<Handler>();
     private String swaggerResourcePath;
     private List<String> apiLevelInboundEndpointBindings = new ArrayList<>();
-    private List<String> resourceLevelInboundEndpointBindings = new ArrayList<>(); // Comes from a resource
+    private List<String> resourceLevelInboundEndpointBindings = new ArrayList<>();
 
     /**
      * The Api description. This could be optional informative text about the Api.
@@ -399,7 +399,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
             if (resourceName != null) {
                 Resource resource = resources.get(resourceName);
                 if (resource != null) {
-                    resource.process(synCtx); // TODO is it applicable?
+                    resource.process(synCtx);
                 }
             } else if (log.isDebugEnabled()) {
                 auditDebug("No resource information on the response: " + synCtx.getMessageID());
