@@ -431,7 +431,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
 
         Set<Resource> acceptableResources = new LinkedHashSet<Resource>();
         for (Resource r : resources.values()) {
-            if (r.canProcess(synCtx)) {
+            if (r.canProcess(synCtx) && isEligibleToProcess(r, synCtx)) {
                 acceptableResources.add(r);
             }
         }
@@ -460,9 +460,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                         }
 
                     }
-                    if (isAllowedToProcess(resource, synCtx)) {
-                        resource.process(synCtx); // TODO block/allow resource here
-                    }
+                    resource.process(synCtx);
                     return;
                 }
             }
@@ -495,18 +493,18 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
         }
     }
 
-    private boolean isAllowedToProcess(Resource resource, MessageContext synCtx) {
+    private boolean isEligibleToProcess(Resource resource, MessageContext synCtx) {
         Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
         if (inboundEndpointName != null) {
             String endpointName = inboundEndpointName.toString();
             if (resource.getInboundEndpointBindings().isEmpty()) {
                 // Resource level bindings are not present.
-                // Allow if this API has: either no bindings, or API level binding to this inbound endpoint name.
+                // Eligible if this API has: either no bindings, or API level binding to this inbound endpoint name.
                 return (apiLevelInboundEndpointBindings.isEmpty() && resourceLevelInboundEndpointBindings.isEmpty()) ||
                         apiLevelInboundEndpointBindings.contains(endpointName);
             }
 
-            // Resource level bindings are present, allow if it contains this inbound endpoint name.
+            // Resource level bindings are present. Eligible if this inbound endpoint name is one of them.
             return resource.getInboundEndpointBindings().contains(endpointName);
         }
         return true;
