@@ -18,7 +18,7 @@
 
 package org.apache.synapse.rest;
 
-public class RESTConstants {
+public class RESTConstants { // TODO deprecate
 
     public static enum METHODS {
         GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH

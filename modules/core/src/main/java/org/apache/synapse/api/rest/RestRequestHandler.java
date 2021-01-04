@@ -16,27 +16,23 @@
 * under the License.
 */
 
-package org.apache.synapse.api.inbound;
+package org.apache.synapse.api.rest;
 
+import org.apache.axis2.Constants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.api.AbstractApiHandler;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
-import org.apache.synapse.rest.API;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This class is responsible for receiving requests from various sources and dispatching
  * them to a suitable REST API for further processing. This is the main entry point for
  * mediating messages through APIs and Resources.
  */
-public class InboundApiHandler extends AbstractApiHandler {
+public class RestRequestHandler extends AbstractApiHandler {
 
-    private static final Log log = LogFactory.getLog(InboundApiHandler.class);
+    private static final Log log = LogFactory.getLog(RestRequestHandler.class);
 
     /**
      * Attempt to process the given message through one of the available APIs. This method
@@ -48,48 +44,22 @@ public class InboundApiHandler extends AbstractApiHandler {
      * @param synCtx MessageContext of the request to be processed
      * @return true if the message was dispatched to an API and false otherwise
      */
-    public boolean process(MessageContext synCtx) { // TODO set endpoint to ctx, via carbon-apimgt
+    public boolean process(MessageContext synCtx) {
 
         if (synCtx.isResponse()) {
-            return dispatchToAPIs(synCtx);
+            return dispatchToAPI(synCtx);
         }
 
         org.apache.axis2.context.MessageContext msgCtx = ((Axis2MessageContext) synCtx).
                 getAxis2MessageContext();
         String protocol = msgCtx.getIncomingTransportName();
-        if (!"ws".equals(protocol) && !"wss".equals(protocol)) { // TODO allow http & https too // allowedProtocols[]
+        if (!Constants.TRANSPORT_HTTP.equals(protocol) && !Constants.TRANSPORT_HTTPS.equals(protocol)) {
             if (log.isDebugEnabled()) {
-                log.debug("Invalid protocol for Inbound API mediation: " + protocol);
+                log.debug("Invalid protocol for REST API mediation: " + protocol);
             }
             return false;
         }
 
-        return dispatchToAPIs(synCtx);
-    }
-
-    private boolean dispatchToAPIs(MessageContext synCtx) {
-        Map<String, Map<String, API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
-                .getApiLevelInboundApiMappings();
-        Map<String, Map<String, API>> implicitInboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
-                .getResourceLevelInboundApiMappings();
-
-        Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
-        if (inboundEndpointName == null || (inboundApiMappings.isEmpty() && implicitInboundApiMappings.isEmpty())) {
-            return false; // Inbound API mapping and dispatching is not applicable.
-        }
-
-        String endpointName = inboundEndpointName.toString();
-
-        List<API> apiList = new ArrayList<>();
-        Map<String, API> mappedApis = inboundApiMappings.get(endpointName);
-        if (mappedApis != null) {
-            apiList.addAll(mappedApis.values());
-        }
-        Map<String, API> implicitlyMappedApis = implicitInboundApiMappings.get(endpointName);
-        if (implicitlyMappedApis != null) {
-            apiList.addAll(implicitlyMappedApis.values());
-        }
-
-        return dispatchToAPI(apiList, synCtx);
+        return dispatchToAPI(synCtx);
     }
 }

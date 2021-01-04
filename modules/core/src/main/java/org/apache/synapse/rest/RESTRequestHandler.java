@@ -22,6 +22,7 @@ import org.apache.axis2.Constants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.api.rest.RestRequestHandler;
 import org.apache.synapse.aspects.ComponentType;
 import org.apache.synapse.aspects.flow.statistics.collectors.CloseEventCollector;
 import org.apache.synapse.aspects.flow.statistics.collectors.OpenEventCollector;
@@ -40,7 +41,10 @@ import java.util.List;
  * them to a suitable REST API for further processing. This is the main entry point for
  * mediating messages through APIs and Resources.
  */
+@Deprecated
 public class RESTRequestHandler {
+
+    private RestRequestHandler restRequestHandler = new RestRequestHandler();
 
     private static final Log log = LogFactory.getLog(RESTRequestHandler.class);
 
@@ -55,126 +59,6 @@ public class RESTRequestHandler {
      * @return true if the message was dispatched to an API and false otherwise
      */
     public boolean process(MessageContext synCtx) {
-
-        if (synCtx.isResponse()) {
-            return dispatchToAPI(synCtx);
-        }
-
-        org.apache.axis2.context.MessageContext msgCtx = ((Axis2MessageContext) synCtx).
-                getAxis2MessageContext();
-        String protocol = msgCtx.getIncomingTransportName();
-        if (!Constants.TRANSPORT_HTTP.equals(protocol) && !Constants.TRANSPORT_HTTPS.equals(protocol)) {
-            if (log.isDebugEnabled()) {
-                log.debug("Invalid protocol for REST API mediation: " + protocol);
-            }
-            return false;
-        }
-
-        return dispatchToAPI(synCtx);
-    }
-
-    private boolean dispatchToAPI(MessageContext synCtx) {
-        Collection<API> apiSet = synCtx.getEnvironment().getSynapseConfiguration().getAPIs(); // TODO my map shd be taken here, in InboundReqHandler
-        return dispatchToAPI(apiSet, synCtx);
-    }
-
-    protected boolean dispatchToAPI(Collection<API> apiSet, MessageContext synCtx) {
-        //Since swapping elements are not possible with sets, Collection is converted to a List
-        List<API> defaultStrategyApiSet = new ArrayList<API>(apiSet);
-        API defaultAPI = null;
-        if (null != synCtx.getProperty(RESTConstants.IS_PROMETHEUS_ENGAGED)) {
-            API api = (API) synCtx.getProperty(RESTConstants.PROCESSED_API);
-            if (identifyAPI(api, synCtx, defaultStrategyApiSet)) {
-                return true;
-            }
-        } else {
-            Object apiObject = synCtx.getProperty(RESTConstants.PROCESSED_API);
-            if (apiObject != null) {
-                API api = (API) synCtx.getProperty(RESTConstants.PROCESSED_API);
-                if (identifyAPI(api, synCtx, defaultStrategyApiSet)) {
-                    return true;
-                }
-            } else {
-                for (API api : apiSet) {
-                    if (identifyAPI(api, synCtx, defaultStrategyApiSet)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        for (API api : defaultStrategyApiSet) {
-            api.setLogSetterValue();
-            if (api.canProcess(synCtx)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Located specific API: " + api.getName() + " for processing message");
-                }
-	            apiProcess(synCtx, api);
-                return true;
-            }
-        }
-
-        if (defaultAPI != null && defaultAPI.canProcess(synCtx)) {
-            defaultAPI.setLogSetterValue();
-	        apiProcess(synCtx, defaultAPI);
-            return true;
-        }
-
-		return false;
-	}
-
-	protected void apiProcess(MessageContext synCtx, API api) {
-        Integer statisticReportingIndex = 0;
-        if (RuntimeStatisticCollector.isStatisticsEnabled()) {
-            statisticReportingIndex = OpenEventCollector
-                    .reportEntryEvent(synCtx, api.getAPIName(), api.getAspectConfiguration(), ComponentType.API);
-            api.process(synCtx);
-            CloseEventCollector.tryEndFlow(synCtx, api.getAPIName(), ComponentType.API, statisticReportingIndex, true);
-        } else {
-            api.process(synCtx);
-        }
-    }
-
-    //Process APIs which have context or url strategy
-    protected void apiProcessNonDefaultStrategy(MessageContext synCtx, API api) {
-        Integer statisticReportingIndex = 0;
-        if (RuntimeStatisticCollector.isStatisticsEnabled()) {
-            statisticReportingIndex = OpenEventCollector
-                    .reportEntryEvent(synCtx, api.getAPIName() + "_" + api.getVersion(), api.getAspectConfiguration(),
-                            ComponentType.API);
-            api.process(synCtx);
-            CloseEventCollector.tryEndFlow(synCtx, api.getAPIName(), ComponentType.API, statisticReportingIndex, true);
-        } else {
-            api.process(synCtx);
-        }
-    }
-
-    protected boolean identifyAPI(API api, MessageContext synCtx, List defaultStrategyApiSet) {
-        API defaultAPI = null;
-        api.setLogSetterValue();
-        if ("/".equals(api.getContext())) {
-            defaultAPI = api;
-        } else if (api.getVersionStrategy().getClass().getName().equals(DefaultStrategy.class.getName())) {
-            //APIs whose VersionStrategy is bound to an instance of DefaultStrategy, should be skipped and processed at
-            // last.Otherwise they will be always chosen to process the request without matching the version.
-            defaultStrategyApiSet.add(api);
-        } else if (api.getVersionStrategy().getClass().getName().equals(ContextVersionStrategy.class.getName())
-                || api.getVersionStrategy().getClass().getName().equals(URLBasedVersionStrategy.class.getName())) {
-            api.setLogSetterValue();
-            if (api.canProcess(synCtx)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Located specific API: " + api.getName() + " for processing message");
-                }
-                apiProcessNonDefaultStrategy(synCtx, api);
-                return true;
-            }
-        } else if (api.canProcess(synCtx)) {
-            if (log.isDebugEnabled()) {
-                log.debug("Located specific API: " + api.getName() + " for processing message");
-            }
-            api.process(synCtx);
-            return true;
-        }
-        return false;
+        return restRequestHandler.process(synCtx);
     }
 }

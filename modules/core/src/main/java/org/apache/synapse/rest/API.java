@@ -263,7 +263,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
         return resourceLevelInboundEndpointBindings;
     }
 
-    boolean canProcess(MessageContext synCtx) {
+    public boolean canProcess(MessageContext synCtx) {
         if (synCtx.isResponse()) {
             String apiName = (String) synCtx.getProperty(RESTConstants.SYNAPSE_REST_API);
             String version = synCtx.getProperty(RESTConstants.SYNAPSE_REST_API_VERSION) == null ?
@@ -333,7 +333,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
         return true;
     }
 
-    void process(MessageContext synCtx) {
+    public void process(MessageContext synCtx) {
 
         auditDebug("Processing message with ID: " + synCtx.getMessageID() + " through the " +
                     "API: " + name);

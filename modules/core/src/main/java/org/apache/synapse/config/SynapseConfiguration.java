@@ -456,6 +456,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                     apiLevelInboundApiMappings.put(inboundEndpointName, apis);
                 }
             }
+            // TODO add the API map here
 
             // Resource level bindings (implicit bindings)
             // TODO get rid of this 'implicit' term
