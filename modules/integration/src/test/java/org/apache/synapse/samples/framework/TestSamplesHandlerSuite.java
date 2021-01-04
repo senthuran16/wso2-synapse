@@ -53,6 +53,7 @@ import org.apache.synapse.samples.framework.tests.endpoint.Sample56;
 import org.apache.synapse.samples.framework.tests.endpoint.Sample58;
 import org.apache.synapse.samples.framework.tests.endpoint.Sample59;
 import org.apache.synapse.samples.framework.tests.mediation.Sample17;
+import org.apache.synapse.samples.framework.tests.mediation.Sample19;
 import org.apache.synapse.samples.framework.tests.mediation.Sample363;
 import org.apache.synapse.samples.framework.tests.mediation.Sample500;
 import org.apache.synapse.samples.framework.tests.message.Sample0;
