@@ -50,6 +50,8 @@ public class TemplateMediator extends AbstractListMediator {
     private String artifactContainerName;
     /** whether the template edited via the management console or not */
     private boolean isEdited;
+    /** flag to identify whether the mediator is currently initializing */
+    private boolean initializing = false;
 
     private String errorHandler = null;
 
@@ -193,8 +195,10 @@ public class TemplateMediator extends AbstractListMediator {
     @Override
     public synchronized void init(SynapseEnvironment se) {
         if (!initialized) {
+            initializing = true;
             super.init(se);
             initialized = true;
+            initializing = false;
             if (!isDynamic()) {
                 // mark as available, if this is marked previously as unavailable in the environment
                 se.clearUnavailabilityOfArtifact(eipPatternName);
@@ -214,6 +218,9 @@ public class TemplateMediator extends AbstractListMediator {
         return initialized;
     }
 
+    public boolean isInitializing(){
+        return initializing;
+    }
     /**
      * Is this a dynamic template?
      *
