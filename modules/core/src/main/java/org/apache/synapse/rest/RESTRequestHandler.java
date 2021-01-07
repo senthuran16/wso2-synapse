@@ -40,6 +40,8 @@ import java.util.List;
  * This class is responsible for receiving requests from various sources and dispatching
  * them to a suitable REST API for further processing. This is the main entry point for
  * mediating messages through APIs and Resources.
+ *
+ * @deprecated  Replaced by {@link RestRequestHandler}
  */
 @Deprecated
 public class RESTRequestHandler {

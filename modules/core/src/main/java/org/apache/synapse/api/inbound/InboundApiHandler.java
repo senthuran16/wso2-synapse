@@ -26,6 +26,7 @@ import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.API;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -49,47 +50,50 @@ public class InboundApiHandler extends AbstractApiHandler {
      * @return true if the message was dispatched to an API and false otherwise
      */
     public boolean process(MessageContext synCtx) { // TODO set endpoint to ctx, via carbon-apimgt
-
         if (synCtx.isResponse()) {
-            return dispatchToAPIs(synCtx);
+            return dispatchToAPI(synCtx);
         }
-
         org.apache.axis2.context.MessageContext msgCtx = ((Axis2MessageContext) synCtx).
                 getAxis2MessageContext();
         String protocol = msgCtx.getIncomingTransportName();
-        if (!"ws".equals(protocol) && !"wss".equals(protocol)) { // TODO allow http & https too // allowedProtocols[]
+        if (!Arrays.asList("ws", "wss", "http", "https").contains(protocol)) {
             if (log.isDebugEnabled()) {
                 log.debug("Invalid protocol for Inbound API mediation: " + protocol);
             }
             return false;
         }
-
-        return dispatchToAPIs(synCtx);
+        return dispatchToAPI(synCtx);
     }
 
-    private boolean dispatchToAPIs(MessageContext synCtx) {
+//    @Override // TODO remove if finalized
+//    protected boolean dispatchToAPI(MessageContext synCtx) {
+//        Map<String, List<API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
+//                .getInboundApiMappings();
+//        Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
+//        if (inboundEndpointName == null) {
+//            return false;
+//        }
+//        String endpointName = inboundEndpointName.toString();
+//        List<API> mappedApis = inboundApiMappings.get(endpointName);
+//        if (mappedApis == null) {
+//            return false;
+//        }
+//        return dispatchToAPI(mappedApis, synCtx);
+//    }
+
+    @Override
+    protected boolean dispatchToAPI(MessageContext synCtx) {
         Map<String, Map<String, API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
-                .getApiLevelInboundApiMappings();
-        Map<String, Map<String, API>> implicitInboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
-                .getResourceLevelInboundApiMappings();
-
+                .getInboundApiMappings();
         Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
-        if (inboundEndpointName == null || (inboundApiMappings.isEmpty() && implicitInboundApiMappings.isEmpty())) {
-            return false; // Inbound API mapping and dispatching is not applicable.
+        if (inboundEndpointName == null) {
+            return false;
         }
-
         String endpointName = inboundEndpointName.toString();
-
-        List<API> apiList = new ArrayList<>();
-        Map<String, API> mappedApis = inboundApiMappings.get(endpointName);
-        if (mappedApis != null) {
-            apiList.addAll(mappedApis.values());
+        Map<String, API> apis = inboundApiMappings.get(endpointName);
+        if (apis == null) {
+            return false;
         }
-        Map<String, API> implicitlyMappedApis = implicitInboundApiMappings.get(endpointName);
-        if (implicitlyMappedApis != null) {
-            apiList.addAll(implicitlyMappedApis.values());
-        }
-
-        return dispatchToAPI(apiList, synCtx);
+        return dispatchToAPI(apis.values(), synCtx);
     }
 }

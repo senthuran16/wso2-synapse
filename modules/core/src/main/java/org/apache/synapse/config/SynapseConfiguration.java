@@ -193,9 +193,11 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
 
     private Map<String, InboundEndpoint> inboundEndpointMap = new ConcurrentHashMap<String, InboundEndpoint>();
 
-    private Map<String, Map<String, API>> apiLevelInboundApiMappings = new ConcurrentHashMap<>();
-
-    private Map<String, Map<String, API>> resourceLevelInboundApiMappings = new ConcurrentHashMap<>();
+    /**
+     * List of inbound APIs, mapped against inbound endpoint names.
+     */
+//    private Map<String, List<API>> inboundApiMappings = new ConcurrentHashMap<>(); // TODO remove if finalized
+    private Map<String, Map<String, API>> inboundApiMappings = new ConcurrentHashMap<>();
 
     /**
      * Description/documentation of the configuration
@@ -414,67 +416,60 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     public synchronized void addAPI(String name, API api) {
         addAPI(name, api, true);
     }
-    
+
     public synchronized void addAPI(String name, API api, boolean reOrder) { // TODO senthuran: API mapping is added here
-        List<String> apiLevelInboundEndpointBindings = api.getApiLevelInboundEndpointBindings();
-        List<String> resourceLevelInboundEndpointBindings = api.getResourceLevelInboundEndpointBindings();
-        if (apiLevelInboundEndpointBindings.isEmpty() && resourceLevelInboundEndpointBindings.isEmpty()) {
-            // No bindings specified. Expose this API
-            if (!apiTable.containsKey(name)) {
-                for (API existingAPI : apiTable.values()) {
-                    if (api.getVersion().equals(existingAPI.getVersion()) && existingAPI.getContext().equals(api.getContext())) {
-                        handleException("URL context: " + api.getContext() + " is already registered" +
-                                " with the API: " + existingAPI.getName());
-                    }
+        if (!apiTable.containsKey(name)) {
+            for (API existingAPI : apiTable.values()) {
+                if (api.getVersion().equals(existingAPI.getVersion()) && existingAPI.getContext().equals(api.getContext())) {
+                    handleException("URL context: " + api.getContext() + " is already registered" +
+                            " with the API: " + existingAPI.getName());
                 }
-                apiTable.put(name, api);
-                if (reOrder) {
-                    reconstructAPITable();
-                }
-                for (SynapseObserver o : observers) {
-                    o.apiAdded(api);
-                }
-            } else {
-                handleException("Duplicate resource definition by the name: " + name);
+            }
+            apiTable.put(name, api);
+            if (reOrder) {
+                reconstructAPITable();
+            }
+            for (SynapseObserver o : observers) {
+                o.apiAdded(api);
             }
         } else {
-            // Inbound API                                                              // TODO this seems to hit twice for the same API
+            handleException("Duplicate resource definition by the name: " + name);
+        }
+    }
 
-            // API level bindings
-            for (String inboundEndpointName : apiLevelInboundEndpointBindings) {
-                if (apiLevelInboundApiMappings.containsKey(inboundEndpointName)) {
-                    Map<String, API> apis = apiLevelInboundApiMappings.get(inboundEndpointName);
-                    if (!apis.containsKey(name)) {
-                        apis.put(name, api);
-                    } else {
-                        Object o = null;
-                        // TODO figure out why does this get hit more than once
-                    }
-                } else {
-                    Map<String, API> apis = new ConcurrentHashMap<>();
-                    apis.put(name, api);
-                    apiLevelInboundApiMappings.put(inboundEndpointName, apis);
-                }
+    public synchronized void addInboundAPIs(Map<String, API> inboundApiBindings) {
+        for (Map.Entry<String, API> apiEntry : inboundApiBindings.entrySet()) {
+            String inboundEndpointName = apiEntry.getKey();
+            API api = apiEntry.getValue();
+            if (inboundApiMappings.containsKey(inboundEndpointName)) {
+                inboundApiMappings.get(inboundEndpointName).put(api.getName(), api);
+            } else {
+                Map<String, API> apis = new ConcurrentHashMap<>();
+                apis.put(api.getName(), api);
+                inboundApiMappings.put(inboundEndpointName, apis);
             }
-            // TODO add the API map here
+        }
 
-            // Resource level bindings (implicit bindings)
-            // TODO get rid of this 'implicit' term
-            // TODO can reuse the same logic for both explicit & implicit map populations
-            for (String inboundEndpointName : resourceLevelInboundEndpointBindings) {
-                if (resourceLevelInboundApiMappings.containsKey(inboundEndpointName)) {
-                    Map<String, API> apis = resourceLevelInboundApiMappings.get(inboundEndpointName);
-                    if (!apis.containsKey(name)) {
-                        apis.put(name, api);
-                    } else {
-                        Object o = null;
-                        // TODO figure out why does this get hit more than once
-                    }
-                } else {
-                    Map<String, API> apis = new ConcurrentHashMap<>();
-                    apis.put(name, api);
-                    resourceLevelInboundApiMappings.put(inboundEndpointName, apis);
-                }
+//        for (Map.Entry<String, API> apiEntry : inboundApiBindings.entrySet()) { // TODO remove if finalized
+//            String inboundEndpointName = apiEntry.getKey();
+//            if (inboundApiMappings.containsKey(inboundEndpointName)) {
+//                inboundApiMappings.get(inboundEndpointName).add(apiEntry.getValue());
+//            } else {
+//                List<API> apiList = new ArrayList<>();
+//                apiList.add(apiEntry.getValue());
+//                inboundApiMappings.put(inboundEndpointName, apiList);
+//            }
+//        }
+    }
+
+    public synchronized void removeInboundAPIs(String name) {
+        for (Map.Entry<String, Map<String, API>> mapping : inboundApiMappings.entrySet()) {
+            Map<String, API> inboundApis = mapping.getValue();
+            API api = inboundApis.get(name);
+            if (api != null) {
+                inboundApis.remove(name);
+            } else {
+                handleException("No inbound API mapping exists by the name: " + name);
             }
         }
     }
@@ -1398,12 +1393,12 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         this.properties = properties;
     }
 
-    public Map<String, Map<String, API>> getApiLevelInboundApiMappings() {
-        return apiLevelInboundApiMappings;
-    }
+//    public synchronized Map<String, List<API>> getInboundApiMappings() { // TODO remove if finalized
+//        return Collections.unmodifiableMap(inboundApiMappings);
+//    }
 
-    public Map<String, Map<String, API>> getResourceLevelInboundApiMappings() {
-        return resourceLevelInboundApiMappings;
+    public synchronized Map<String, Map<String, API>> getInboundApiMappings() {
+        return Collections.unmodifiableMap(inboundApiMappings);
     }
 
     /**
@@ -1710,57 +1705,38 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
 			}
         }
 
-        for (API api : apiTable.values()) {
-			try {
-				api.init(se); // TODO Check whether API is initted here or not
-			} catch (Exception e) {
-				log.error(" Error in initializing API [ " + api.getName()
-						+ "] " + e.getMessage());
-			}
-        }
+//        for (API api : apiTable.values()) { // TODO confirm and remove
+//			try {
+//				api.init(se);
+//			} catch (Exception e) {
+//				log.error(" Error in initializing API [ " + api.getName()
+//						+ "] " + e.getMessage());
+//			}
+//        }
 
-        initInboundApis(se);
-        initImportedLibraries(se);
-    }
-
-    private void initInboundApis(SynapseEnvironment synapseEnvironment) { // TODO handle destroys and all
-        for (Map<String, API> apis : apiLevelInboundApiMappings.values()) {
-            for (Map.Entry<String, API> apiEntry : apis.entrySet()) {
+        // Initialize Inbound APIs
+        for (Map<String, API> inboundApiMapping : inboundApiMappings.values()) {
+            for (API api : inboundApiMapping.values()) {
                 try {
-                    apiEntry.getValue().init(synapseEnvironment);
+                    api.init(se);
                 } catch (Exception e) {
-                    log.error(" Error in initializing inbound API [ " + apiEntry.getKey()+ "] " + e.getMessage());
-                }
-            }
-        }
-
-        // Init implicit bindings
-        for (Map<String, API> apis : resourceLevelInboundApiMappings.values()) {
-            for (Map.Entry<String, API> apiEntry : apis.entrySet()) {
-                try {
-                    apiEntry.getValue().init(synapseEnvironment);
-                } catch (Exception e) {
-                    log.error(" Error in initializing inbound API [ " + apiEntry.getKey()+ "] " + e.getMessage());
+                    log.error(" Error in initializing inbound API [ " + api.getName() + "] " + e.getMessage());
                 }
             }
         }
 
 
-
-//        List<String> initializedInboundApiNames = new ArrayList<>();
-//        for (List<API> inboundApis : inboundAPIMappingMap.values()) {
-//            for (API api : inboundApis) {
-//                if (!initializedInboundApiNames.contains(api.getName())) {
-//                    try {
-//                        api.init(synapseEnvironment);
-//                        initializedInboundApiNames.add(api.getName());
-//                    } catch (Exception e) {
-//                        log.error(" Error in initializing inbound API [ " + api.getName()
-//                                + "] " + e.getMessage());
-//                    }
+//        for (List<API> apis : inboundApiMappings.values()) { // TODO remove is finalized
+//            for (API api : apis) {
+//                try {
+//                    api.init(se);
+//                } catch (Exception e) {
+//                    log.error(" Error in initializing inbound API [ " + api.getName() + "] " + e.getMessage());
 //                }
 //            }
 //        }
+
+        initImportedLibraries(se);
     }
 
     private void handleException(String msg) {

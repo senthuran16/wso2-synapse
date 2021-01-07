@@ -23,7 +23,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.api.AbstractApiHandler;
+import org.apache.synapse.api.ApiConstants;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
+import org.apache.synapse.rest.API;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is responsible for receiving requests from various sources and dispatching
@@ -61,5 +67,30 @@ public class RestRequestHandler extends AbstractApiHandler {
         }
 
         return dispatchToAPI(synCtx);
+    }
+
+//    @Override // TODO remove if finalized
+//    protected boolean dispatchToAPI(MessageContext synCtx) {
+//        Map<String, List<API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
+//                .getInboundApiMappings();
+//        List<API> apiSet = inboundApiMappings.get(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME);
+//        if (apiSet == null) {
+//            return dispatchToAPI(Collections.<API>emptyList(), synCtx);
+//        }
+//        return dispatchToAPI(apiSet, synCtx);
+//    }
+
+    @Override
+    protected boolean dispatchToAPI(MessageContext synCtx) {
+        Map<String, Map<String, API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
+                .getInboundApiMappings();
+        // TODO can we safely rely on dispatching to "default" in normal mode?
+        //  - Observers when initting - Handlers when parsing
+        // TODO if not, we can add to api table only if no bindings are returned out of 'createInboundApis'
+        Map<String, API> apis = inboundApiMappings.get(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME);
+        if (apis == null) {
+            return dispatchToAPI(Collections.<API>emptyList(), synCtx);
+        }
+        return dispatchToAPI(apis.values(), synCtx);
     }
 }

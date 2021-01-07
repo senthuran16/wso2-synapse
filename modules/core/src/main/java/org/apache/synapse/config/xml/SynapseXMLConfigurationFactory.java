@@ -415,6 +415,9 @@ public class SynapseXMLConfigurationFactory implements ConfigurationFactory {
         try {
             api = APIFactory.createAPI(elem, properties);
             config.addAPI(api.getName(), api);
+            // Inbound APIs
+            Map<String, API> inboundApis = APIFactory.createInboundAPIs(elem, properties);
+            config.addInboundAPIs(inboundApis);
         } catch (Exception e) {
             String msg = "API configuration cannot be built";
             handleConfigurationError(SynapseConstants.FAIL_SAFE_MODE_API, msg, e);
@@ -436,6 +439,9 @@ public class SynapseXMLConfigurationFactory implements ConfigurationFactory {
         try {
             api = APIFactory.createAPI(elem, properties);
             config.addAPI(api.getName(), api, reOrder);
+            // Inbound APIs
+            Map<String, API> inboundApis = APIFactory.createInboundAPIs(elem, properties);
+            config.addInboundAPIs(inboundApis);
         } catch (Exception e) {
             String msg = "API configuration cannot be built";
             handleConfigurationError(SynapseConstants.FAIL_SAFE_MODE_API, msg, e);

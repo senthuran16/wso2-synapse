@@ -223,7 +223,6 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
             }
         }
         resources.put(resource.getName(), resource);
-        resourceLevelInboundEndpointBindings.addAll(resource.getInboundEndpointBindings());
     }
 
     private boolean resourceMatches(Resource r1, Resource r2) {
@@ -249,18 +248,6 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
 
     public Handler[] getHandlers() {
         return handlers.toArray(new Handler[handlers.size()]);
-    }
-
-    public void addApiLevelInboundEndpointBinding(String inboundEndpointName) {
-        apiLevelInboundEndpointBindings.add(inboundEndpointName);
-    }
-
-    public List<String> getApiLevelInboundEndpointBindings() {
-        return apiLevelInboundEndpointBindings;
-    }
-
-    public List<String> getResourceLevelInboundEndpointBindings() {
-        return resourceLevelInboundEndpointBindings;
     }
 
     public boolean canProcess(MessageContext synCtx) {
@@ -431,7 +418,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
 
         Set<Resource> acceptableResources = new LinkedHashSet<Resource>();
         for (Resource r : resources.values()) {
-            if (r.canProcess(synCtx) && isEligibleToProcess(r, synCtx)) {
+            if (r.canProcess(synCtx)) {
                 acceptableResources.add(r);
             }
         }
@@ -491,23 +478,6 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                 msgCtx.setProperty("NIO-ACK-Requested", true);
             }
         }
-    }
-
-    private boolean isEligibleToProcess(Resource resource, MessageContext synCtx) {
-        Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
-        if (inboundEndpointName != null) {
-            String endpointName = inboundEndpointName.toString();
-            if (resource.getInboundEndpointBindings().isEmpty()) {
-                // Resource level bindings are not present.
-                // Eligible if this API has: either no bindings, or API level binding to this inbound endpoint name.
-                return (apiLevelInboundEndpointBindings.isEmpty() && resourceLevelInboundEndpointBindings.isEmpty()) ||
-                        apiLevelInboundEndpointBindings.contains(endpointName);
-            }
-
-            // Resource level bindings are present. Eligible if this inbound endpoint name is one of them.
-            return resource.getInboundEndpointBindings().contains(endpointName);
-        }
-        return true;
     }
 
     /**

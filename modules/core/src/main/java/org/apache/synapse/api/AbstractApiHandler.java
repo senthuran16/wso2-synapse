@@ -16,6 +16,7 @@ import org.apache.synapse.rest.version.URLBasedVersionStrategy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractApiHandler { // TODO Extend RESTRequestHandler and InboundApiHandler here
     private static final Log log = LogFactory.getLog(AbstractApiHandler.class);
@@ -32,10 +33,12 @@ public abstract class AbstractApiHandler { // TODO Extend RESTRequestHandler and
      */
     public abstract boolean process(MessageContext synCtx);
 
-    protected boolean dispatchToAPI(MessageContext synCtx) {
-        Collection<API> apiSet = synCtx.getEnvironment().getSynapseConfiguration().getAPIs(); // TODO my map shd be taken here, in InboundReqHandler
-        return dispatchToAPI(apiSet, synCtx);
-    }
+//    protected boolean dispatchToAPI(MessageContext synCtx) { // TODO remove if finalized
+//        Collection<API> apiSet = synCtx.getEnvironment().getSynapseConfiguration().getAPIs(); // TODO my map shd be taken here, in InboundReqHandler
+//        return dispatchToAPI(apiSet, synCtx);
+//    }
+
+    protected abstract boolean dispatchToAPI(MessageContext synCtx);
 
     protected boolean dispatchToAPI(Collection<API> apiSet, MessageContext synCtx) {
         //Since swapping elements are not possible with sets, Collection is converted to a List

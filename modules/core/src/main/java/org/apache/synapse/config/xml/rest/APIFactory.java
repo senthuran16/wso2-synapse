@@ -26,17 +26,21 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.SynapseException;
+import org.apache.synapse.api.ApiConstants;
 import org.apache.synapse.aspects.AspectConfiguration;
 import org.apache.synapse.commons.util.PropertyHelper;
 import org.apache.synapse.config.xml.XMLConfigConstants;
 import org.apache.synapse.rest.API;
 import org.apache.synapse.rest.Handler;
 import org.apache.synapse.rest.RESTConstants;
+import org.apache.synapse.rest.Resource;
 import org.apache.synapse.rest.version.VersionStrategy;
 import org.apache.synapse.util.CommentListUtil;
 
 import javax.xml.namespace.QName;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 
 public class APIFactory {
@@ -55,6 +59,47 @@ public class APIFactory {
     }
 
     public static API createAPI(OMElement apiElt, Properties properties) {
+        return createAPI(apiElt, properties, false);
+    }
+
+    public static Map<String, API> createInboundAPIs(OMElement apiElt, Properties properties) {
+        Map<String, API> bindings = new HashMap<>();
+        String[] inboundEndpointNames;
+        OMAttribute apiBindings = apiElt.getAttribute(new QName(ApiConstants.BINDS_TO));
+
+        Iterator resources = apiElt.getChildrenWithName(new QName(
+                XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
+        while (resources.hasNext()) {
+            OMElement resourceElt = (OMElement) resources.next();
+            OMAttribute resourceBindings = resourceElt.getAttribute(new QName(ApiConstants.BINDS_TO));
+            if (resourceBindings != null) {
+                // Resource has bindings. Override.
+                inboundEndpointNames = resourceBindings.getAttributeValue().split(",");
+            } else if (apiBindings != null) {
+                // Inherit bindings from API.
+                inboundEndpointNames = apiBindings.getAttributeValue().split(",");
+            } else {
+                // Default binding.
+                inboundEndpointNames = new String[]{ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME};
+            }
+
+            // Add resource to the appropriate inbound API
+            Resource resource = ResourceFactory.createResource(resourceElt, properties);
+            for (String inboundEndpointName : inboundEndpointNames) {
+                String trimmedInboundEndpointName = inboundEndpointName.trim();
+                API inboundApi = bindings.get(trimmedInboundEndpointName);
+                if (inboundApi == null) {
+                    inboundApi = createAPI(apiElt, properties, true);
+                    bindings.put(trimmedInboundEndpointName, inboundApi);
+                }
+                inboundApi.addResource(resource);
+            }
+        }
+
+        return bindings;
+    }
+
+    private static API createAPI(OMElement apiElt, Properties properties, boolean isInbound) {
         OMAttribute nameAtt = apiElt.getAttribute(new QName("name"));
         if (nameAtt == null || "".equals(nameAtt.getAttributeValue())) {
             handleException("Attribute 'name' is required for an API definition");
@@ -86,17 +131,19 @@ public class APIFactory {
             api.setSwaggerResourcePath(publishSwagger.getAttributeValue());
         }
 
-        Iterator resources = apiElt.getChildrenWithName(new QName(
-                XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
-        boolean noResources = true;
-        while (resources.hasNext()) {
-            OMElement resourceElt = (OMElement) resources.next();
-            api.addResource(ResourceFactory.createResource(resourceElt, properties));
-            noResources = false;
-        }
+        if (!isInbound) {
+            Iterator resources = apiElt.getChildrenWithName(new QName(
+                    XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
+            boolean noResources = true;
+            while (resources.hasNext()) {
+                OMElement resourceElt = (OMElement) resources.next();
+                api.addResource(ResourceFactory.createResource(resourceElt, properties));
+                noResources = false;
+            }
 
-        if (noResources) {
-            handleException("An API must contain at least one resource definition");
+            if (noResources) {
+                handleException("An API must contain at least one resource definition");
+            }
         }
 
         OMElement handlersElt = apiElt.getFirstChildWithName(new QName(
@@ -154,21 +201,7 @@ public class APIFactory {
             }
         }
         CommentListUtil.populateComments(apiElt, api.getCommentsList());
-
-        addBindToEndpointNames(api, apiElt);
-
         return api;
-    }
-
-    private static void addBindToEndpointNames(API api, OMElement apiElt) {
-        OMAttribute bindTo = apiElt.getAttribute(new QName("binds-to")); // TODO introduce a const
-        if (bindTo != null) {
-            String[] bindToEndpointNames = bindTo.getAttributeValue().split(",");
-            for (String endpointName : bindToEndpointNames) {
-                api.addApiLevelInboundEndpointBinding(endpointName.trim());
-            }
-        }
-
     }
 
     private static void defineHandler(API api, OMElement handlerElt) {
