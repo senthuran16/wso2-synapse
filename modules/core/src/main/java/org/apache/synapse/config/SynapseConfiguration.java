@@ -77,6 +77,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -475,18 +476,11 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                 }
             }        	
             apiTable.put(name, api);
-            updateInboundApiMappings(name, api);
+            removeInboundApiMappings(name);
+            addInboundApiMappings(name, api);
             reconstructAPITable();
             for (SynapseObserver o : observers) {
                 o.apiUpdated(api);
-            }
-        }
-    }
-
-    private void updateInboundApiMappings(String apiName, API api) {
-        for (Map<String, API> apis : inboundApiMappings.values()) {
-            if (apis.containsKey(apiName)) {
-                apis.put(apiName, api);
             }
         }
     }
@@ -517,8 +511,14 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     }
 
     private void removeInboundApiMappings(String apiName) {
-        for (Map<String, API> apis : inboundApiMappings.values()) {
+        Iterator<Map.Entry<String, Map<String, API>>> iterator = inboundApiMappings.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Map<String, API>> mappings = iterator.next();
+            Map<String, API> apis = mappings.getValue();
             apis.remove(apiName);
+            if (apis.isEmpty()) {
+                iterator.remove(); // Clean-up if empty map is left after removal
+            }
         }
     }
 
