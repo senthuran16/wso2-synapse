@@ -39,16 +39,6 @@ public class InboundApiHandler extends AbstractApiHandler {
 
     private static final Log log = LogFactory.getLog(InboundApiHandler.class);
 
-    /**
-     * Attempt to process the given message through one of the available APIs. This method
-     * will first try to locate a suitable API for the given message by running it through
-     * the API validation routines available. If a matching API is found it will dispatch
-     * the message to the located API. If a matching API cannot be found, message will be
-     * left intact so any other handlers (eg: main sequence) can pick it up later.
-     *
-     * @param synCtx MessageContext of the request to be processed
-     * @return true if the message was dispatched to an API and false otherwise
-     */
     public boolean process(MessageContext synCtx) { // TODO set endpoint to ctx, via carbon-apimgt
         if (synCtx.isResponse()) {
             return dispatchToAPI(synCtx);
