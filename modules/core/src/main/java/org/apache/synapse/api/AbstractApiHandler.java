@@ -33,11 +33,6 @@ public abstract class AbstractApiHandler { // TODO Extend RESTRequestHandler and
      */
     public abstract boolean process(MessageContext synCtx);
 
-//    protected boolean dispatchToAPI(MessageContext synCtx) { // TODO remove if finalized
-//        Collection<API> apiSet = synCtx.getEnvironment().getSynapseConfiguration().getAPIs(); // TODO my map shd be taken here, in InboundReqHandler
-//        return dispatchToAPI(apiSet, synCtx);
-//    }
-
     protected abstract boolean dispatchToAPI(MessageContext synCtx);
 
     protected boolean dispatchToAPI(Collection<API> apiSet, MessageContext synCtx) {

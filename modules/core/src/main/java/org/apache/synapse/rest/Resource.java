@@ -64,6 +64,8 @@ public class Resource extends AbstractRESTProcessor implements ManagedLifecycle,
 
     AspectConfiguration aspectConfiguration;
 
+    private Set<String> inboundEndpointBindings = new HashSet<>();
+
     /**
      * In-lined sequence to be executed upon receiving messages
      */
@@ -211,6 +213,18 @@ public class Resource extends AbstractRESTProcessor implements ManagedLifecycle,
 
     public void setProtocol(int protocol) {
         this.protocol = protocol;
+    }
+
+    public Set<String> getInboundEndpointBindings() {
+        return inboundEndpointBindings;
+    }
+
+    public void addInboundEndpointBinding(String inboundEndpointName) {
+        inboundEndpointBindings.add(inboundEndpointName);
+    }
+
+    public void addAllInboundEndpointBindings(Set<String> inboundEndpointBindings) {
+        this.inboundEndpointBindings.addAll(inboundEndpointBindings);
     }
 
     @Override

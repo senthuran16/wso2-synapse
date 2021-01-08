@@ -30,7 +30,6 @@ import org.apache.synapse.rest.API;
 import org.apache.synapse.transport.customlogsetter.CustomLogSetter;
 
 import java.io.File;
-import java.util.Map;
 import java.util.Properties;
 
 public class APIDeployer extends AbstractSynapseArtifactDeployer {
@@ -59,14 +58,6 @@ public class APIDeployer extends AbstractSynapseArtifactDeployer {
                     log.debug("Initialized the API: " + api.getName());
                 }
                 getSynapseConfiguration().addAPI(api.getName(), api);
-
-                // Inbound APIs
-                Map<String, API> inboundApis = APIFactory.createInboundAPIs(artifactConfig, properties);
-                getSynapseConfiguration().addInboundAPIs(inboundApis);
-                for (API inboundApi : inboundApis.values()) {
-                    inboundApi.init(getSynapseEnvironment()); // TODO Handle updates?
-                }
-
                 if (log.isDebugEnabled()) {
                     log.debug("API deployment from file : " + fileName + " : Completed");
                 }
@@ -117,17 +108,12 @@ public class APIDeployer extends AbstractSynapseArtifactDeployer {
             api.init(getSynapseEnvironment());
             API existingAPI = getSynapseConfiguration().getAPI(existingArtifactName);
             if (existingArtifactName.equals(api.getName())) {
-                getSynapseConfiguration().updateAPI(existingArtifactName, api); // TODO handle update cases
+                getSynapseConfiguration().updateAPI(existingArtifactName, api);
             } else {
                 // The user has changed the name of the API
                 // We should add the updated API as a new API and remove the old one
                 getSynapseConfiguration().addAPI(api.getName(), api);
                 getSynapseConfiguration().removeAPI(existingArtifactName);
-
-                // Inbound APIs
-                Map<String, API> inboundApis = APIFactory.createInboundAPIs(artifactConfig, properties);
-                getSynapseConfiguration().addInboundAPIs(inboundApis);
-                getSynapseConfiguration().removeInboundAPIs(existingArtifactName);
                 log.info("API: " + existingArtifactName + " has been undeployed");
             }
 

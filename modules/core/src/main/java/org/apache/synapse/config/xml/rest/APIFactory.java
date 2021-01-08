@@ -38,9 +38,7 @@ import org.apache.synapse.rest.version.VersionStrategy;
 import org.apache.synapse.util.CommentListUtil;
 
 import javax.xml.namespace.QName;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Properties;
 
 public class APIFactory {
@@ -59,47 +57,6 @@ public class APIFactory {
     }
 
     public static API createAPI(OMElement apiElt, Properties properties) {
-        return createAPI(apiElt, properties, false);
-    }
-
-    public static Map<String, API> createInboundAPIs(OMElement apiElt, Properties properties) {
-        Map<String, API> bindings = new HashMap<>();
-        String[] inboundEndpointNames;
-        OMAttribute apiBindings = apiElt.getAttribute(new QName(ApiConstants.BINDS_TO));
-
-        Iterator resources = apiElt.getChildrenWithName(new QName(
-                XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
-        while (resources.hasNext()) {
-            OMElement resourceElt = (OMElement) resources.next();
-            OMAttribute resourceBindings = resourceElt.getAttribute(new QName(ApiConstants.BINDS_TO));
-            if (resourceBindings != null) {
-                // Resource has bindings. Override.
-                inboundEndpointNames = resourceBindings.getAttributeValue().split(",");
-            } else if (apiBindings != null) {
-                // Inherit bindings from API.
-                inboundEndpointNames = apiBindings.getAttributeValue().split(",");
-            } else {
-                // Default binding.
-                inboundEndpointNames = new String[]{ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME};
-            }
-
-            // Add resource to the appropriate inbound API
-            Resource resource = ResourceFactory.createResource(resourceElt, properties);
-            for (String inboundEndpointName : inboundEndpointNames) {
-                String trimmedInboundEndpointName = inboundEndpointName.trim();
-                API inboundApi = bindings.get(trimmedInboundEndpointName);
-                if (inboundApi == null) {
-                    inboundApi = createAPI(apiElt, properties, true);
-                    bindings.put(trimmedInboundEndpointName, inboundApi);
-                }
-                inboundApi.addResource(resource);
-            }
-        }
-
-        return bindings;
-    }
-
-    private static API createAPI(OMElement apiElt, Properties properties, boolean isInbound) {
         OMAttribute nameAtt = apiElt.getAttribute(new QName("name"));
         if (nameAtt == null || "".equals(nameAtt.getAttributeValue())) {
             handleException("Attribute 'name' is required for an API definition");
@@ -131,19 +88,21 @@ public class APIFactory {
             api.setSwaggerResourcePath(publishSwagger.getAttributeValue());
         }
 
-        if (!isInbound) {
-            Iterator resources = apiElt.getChildrenWithName(new QName(
-                    XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
-            boolean noResources = true;
-            while (resources.hasNext()) {
-                OMElement resourceElt = (OMElement) resources.next();
-                api.addResource(ResourceFactory.createResource(resourceElt, properties));
-                noResources = false;
-            }
+        addBindsTo(api, apiElt);
 
-            if (noResources) {
-                handleException("An API must contain at least one resource definition");
-            }
+        Iterator resources = apiElt.getChildrenWithName(new QName(
+                XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
+        boolean noResources = true;
+        while (resources.hasNext()) {
+            OMElement resourceElt = (OMElement) resources.next();
+            Resource resource = ResourceFactory.createResource(resourceElt, properties);
+            validateBindsTo(api, resource);
+            api.addResource(resource);
+            noResources = false;
+        }
+
+        if (noResources) {
+            handleException("An API must contain at least one resource definition");
         }
 
         OMElement handlersElt = apiElt.getFirstChildWithName(new QName(
@@ -202,6 +161,28 @@ public class APIFactory {
         }
         CommentListUtil.populateComments(apiElt, api.getCommentsList());
         return api;
+    }
+
+    private static void addBindsTo(API api, OMElement apiElt) {
+        OMAttribute bindsTo = apiElt.getAttribute(new QName(ApiConstants.BINDS_TO));
+        if (bindsTo != null) {
+            String[] inboundEndpointNames = bindsTo.getAttributeValue().split(",");
+            for (String inboundEndpointName : inboundEndpointNames) {
+                String trimmedInboundEndpointName = inboundEndpointName.trim();
+                if (!trimmedInboundEndpointName.isEmpty()) {
+                    api.addInboundEndpointBinding(trimmedInboundEndpointName);
+                }
+            }
+        }
+    }
+
+    private static void validateBindsTo(API api, Resource resource) {
+        if (resource.getInboundEndpointBindings().isEmpty()) {
+            // Resource has no inbound endpoint bindings specified. Inherit 'binds-to' from the API.
+            resource.addAllInboundEndpointBindings(api.getInboundEndpointBindings());
+        } else if (!api.getInboundEndpointBindings().containsAll(resource.getInboundEndpointBindings())) {
+            handleException("A resource definition's 'binds-to' must be a subset of its API definition's 'binds-to'");
+        }
     }
 
     private static void defineHandler(API api, OMElement handlerElt) {

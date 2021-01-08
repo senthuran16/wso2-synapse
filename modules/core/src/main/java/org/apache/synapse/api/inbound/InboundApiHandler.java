@@ -21,13 +21,13 @@ package org.apache.synapse.api.inbound;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.api.AbstractApiHandler;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.rest.API;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -65,34 +65,16 @@ public class InboundApiHandler extends AbstractApiHandler {
         return dispatchToAPI(synCtx);
     }
 
-//    @Override // TODO remove if finalized
-//    protected boolean dispatchToAPI(MessageContext synCtx) {
-//        Map<String, List<API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
-//                .getInboundApiMappings();
-//        Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
-//        if (inboundEndpointName == null) {
-//            return false;
-//        }
-//        String endpointName = inboundEndpointName.toString();
-//        List<API> mappedApis = inboundApiMappings.get(endpointName);
-//        if (mappedApis == null) {
-//            return false;
-//        }
-//        return dispatchToAPI(mappedApis, synCtx);
-//    }
-
     @Override
     protected boolean dispatchToAPI(MessageContext synCtx) {
-        Map<String, Map<String, API>> inboundApiMappings = synCtx.getEnvironment().getSynapseConfiguration()
-                .getInboundApiMappings();
-        Object inboundEndpointName = synCtx.getProperty("inbound.endpoint.name");
+        Object inboundEndpointName = synCtx.getProperty(SynapseConstants.INBOUND_ENDPOINT_NAME);
         if (inboundEndpointName == null) {
             return false;
         }
-        String endpointName = inboundEndpointName.toString();
-        Map<String, API> apis = inboundApiMappings.get(endpointName);
+        Map<String, API> apis = synCtx.getEnvironment().getSynapseConfiguration()
+                .getInboundApiMappings().get(inboundEndpointName.toString());
         if (apis == null) {
-            return false;
+            return dispatchToAPI(Collections.<API>emptyList(), synCtx);
         }
         return dispatchToAPI(apis.values(), synCtx);
     }
