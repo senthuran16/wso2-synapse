@@ -200,7 +200,8 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
      * If no inbound endpoint binding is specified in an API,
      * the API will be mapped against {@value ApiConstants#DEFAULT_BINDING_ENDPOINT_NAME}.
      */
-    private Map<String, Map<String, API>> inboundApiMappings = new ConcurrentHashMap<>();
+    private Map<String, Map<String, API>> inboundApiMappings =
+            Collections.synchronizedMap(new LinkedHashMap<String, Map<String, API>>());
 
     /**
      * Description/documentation of the configuration
@@ -448,7 +449,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
             if (inboundApiMappings.containsKey(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME)) {
                 inboundApiMappings.get(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME).put(name, api);
             } else {
-                Map<String, API> apis = new ConcurrentHashMap<>();
+                Map<String, API> apis = Collections.synchronizedMap(new LinkedHashMap<String, API>());
                 apis.put(name, api);
                 inboundApiMappings.put(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME, apis);
             }
@@ -457,7 +458,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                 if (inboundApiMappings.containsKey(inboundEndpointName)) {
                     inboundApiMappings.get(inboundEndpointName).put(name, api);
                 } else {
-                    Map<String, API> apis = new ConcurrentHashMap<>();
+                    Map<String, API> apis = Collections.synchronizedMap(new LinkedHashMap<String, API>());
                     apis.put(name, api);
                     inboundApiMappings.put(inboundEndpointName, apis);
                 }
@@ -2298,7 +2299,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     }
 
     private Map<String, API> getReConstructedApiMap(Map<String, API> originalApiMap) {
-        Map<String, API> duplicateMap = new LinkedHashMap<>();
+        Map<String, API> duplicateMap = Collections.synchronizedMap(new LinkedHashMap<String, API>());
         String[] contextValues = new String[originalApiMap.size()];
         int i = 0;
         for (API api : originalApiMap.values()) {
@@ -2323,7 +2324,8 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     }
 
     private synchronized void reconstructInboundApiMappings() {
-        Map<String, Map<String, API>> duplicateInboundApiMappings = new LinkedHashMap<>();
+        Map<String, Map<String, API>> duplicateInboundApiMappings =
+                Collections.synchronizedMap(new LinkedHashMap<String, Map<String, API>>());
         for (Map.Entry<String, Map<String, API>> mapping : inboundApiMappings.entrySet()) {
             Map<String, API> apis = mapping.getValue();
             Map<String, API> reconstructedApis = getReConstructedApiMap(apis);
