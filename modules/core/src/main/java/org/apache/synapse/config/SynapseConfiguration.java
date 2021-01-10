@@ -85,6 +85,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * The SynapseConfiguration holds the global configuration for a Synapse
@@ -2299,28 +2302,11 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     }
 
     private Map<String, API> getReConstructedApiMap(Map<String, API> originalApiMap) {
-        Map<String, API> duplicateMap = Collections.synchronizedMap(new LinkedHashMap<String, API>());
-        String[] contextValues = new String[originalApiMap.size()];
-        int i = 0;
-        for (API api : originalApiMap.values()) {
-            contextValues[i] = api.getContext();
-            i++;
-        }
-        Arrays.sort(contextValues, new java.util.Comparator<String>() {
-            public int compare(String context1, String context2) {
-                return context1.length() - context2.length();
-            }
-        });
-        ArrayUtils.reverse(contextValues);
-        for (String context : contextValues) {
-            for (String mapKey : originalApiMap.keySet()) {
-                if (context.equals(originalApiMap.get(mapKey).getContext())) {
-                    duplicateMap.put(mapKey, originalApiMap.get(mapKey));
-                    break;
-                }
-            }
-        }
-        return duplicateMap;
+        Stream<Map.Entry<String, API>> sorted = originalApiMap.entrySet().stream()
+                .sorted(Map.Entry
+                        .comparingByValue((api1, api2) -> api2.getContext().length() - api1.getContext().length()));
+        return sorted.collect(toMap(Map.Entry::getKey,
+                Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
     private synchronized void reconstructInboundApiMappings() {
