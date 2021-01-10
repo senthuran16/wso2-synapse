@@ -16,39 +16,28 @@
 * under the License.
 */
 
-package org.apache.synapse.rest;
+package org.apache.synapse.api.rest;
 
 import org.apache.axis2.Constants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
-import org.apache.synapse.api.rest.RestRequestHandler;
-import org.apache.synapse.aspects.ComponentType;
-import org.apache.synapse.aspects.flow.statistics.collectors.CloseEventCollector;
-import org.apache.synapse.aspects.flow.statistics.collectors.OpenEventCollector;
-import org.apache.synapse.aspects.flow.statistics.collectors.RuntimeStatisticCollector;
+import org.apache.synapse.api.AbstractApiHandler;
+import org.apache.synapse.api.ApiConstants;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
-import org.apache.synapse.rest.version.ContextVersionStrategy;
-import org.apache.synapse.rest.version.DefaultStrategy;
-import org.apache.synapse.rest.version.URLBasedVersionStrategy;
+import org.apache.synapse.rest.API;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * This class is responsible for receiving requests from various sources and dispatching
  * them to a suitable REST API for further processing. This is the main entry point for
  * mediating messages through APIs and Resources.
- *
- * @deprecated  Replaced by {@link RestRequestHandler}
  */
-@Deprecated
-public class RESTRequestHandler {
+public class RestRequestHandler extends AbstractApiHandler {
 
-    private RestRequestHandler restRequestHandler = new RestRequestHandler();
-
-    private static final Log log = LogFactory.getLog(RESTRequestHandler.class);
+    private static final Log log = LogFactory.getLog(RestRequestHandler.class);
 
     /**
      * Attempt to process the given message through one of the available APIs. This method
@@ -61,6 +50,31 @@ public class RESTRequestHandler {
      * @return true if the message was dispatched to an API and false otherwise
      */
     public boolean process(MessageContext synCtx) {
-        return restRequestHandler.process(synCtx);
+
+        if (synCtx.isResponse()) {
+            return dispatchToAPI(synCtx);
+        }
+
+        org.apache.axis2.context.MessageContext msgCtx = ((Axis2MessageContext) synCtx).
+                getAxis2MessageContext();
+        String protocol = msgCtx.getIncomingTransportName();
+        if (!Constants.TRANSPORT_HTTP.equals(protocol) && !Constants.TRANSPORT_HTTPS.equals(protocol)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Invalid protocol for REST API mediation: " + protocol);
+            }
+            return false;
+        }
+
+        return dispatchToAPI(synCtx);
+    }
+
+    @Override
+    protected boolean dispatchToAPI(MessageContext synCtx) {
+        Map<String, API> apis = synCtx.getEnvironment().getSynapseConfiguration()
+                .getInboundApiMappings().get(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME);
+        if (apis == null) {
+            return dispatchToAPI(Collections.<API>emptyList(), synCtx);
+        }
+        return dispatchToAPI(apis.values(), synCtx);
     }
 }

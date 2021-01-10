@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.SequenceType;
 import org.apache.synapse.SynapseException;
+import org.apache.synapse.api.ApiConstants;
 import org.apache.synapse.config.xml.SequenceMediatorFactory;
 import org.apache.synapse.config.xml.XMLConfigConstants;
 import org.apache.synapse.mediators.base.SequenceMediator;
@@ -49,7 +50,21 @@ public class ResourceFactory {
         configureURLMappings(resource, resourceElt);
         configureSequences(resource, resourceElt, properties);
         configureFilters(resource, resourceElt);
+        configureInboundEndpointBindings(resource, resourceElt);
         return resource;
+    }
+
+    private static void configureInboundEndpointBindings(Resource resource, OMElement resourceElt) {
+        OMAttribute bindsTo = resourceElt.getAttribute(new QName(ApiConstants.BINDS_TO));
+        if (bindsTo != null) {
+            String[] inboundEndpointNames = bindsTo.getAttributeValue().split(",");
+            for (String inboundEndpointName : inboundEndpointNames) {
+                String trimmedInboundEndpointName = inboundEndpointName.trim();
+                if (!trimmedInboundEndpointName.isEmpty()) {
+                    resource.addInboundEndpointBinding(trimmedInboundEndpointName);
+                }
+            }
+        }
     }
 
     private static void configureFilters(Resource resource, OMElement resourceElt) {

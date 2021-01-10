@@ -33,6 +33,7 @@ import org.apache.synapse.Startup;
 import org.apache.synapse.SynapseArtifact;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.SynapseException;
+import org.apache.synapse.api.ApiConstants;
 import org.apache.synapse.aspects.flow.statistics.store.CompletedStructureStore;
 import org.apache.synapse.carbonext.TenantInfoConfigProvider;
 import org.apache.synapse.carbonext.TenantInfoConfigurator;
@@ -68,9 +69,6 @@ import org.apache.synapse.registry.Registry;
 import org.apache.synapse.rest.API;
 import org.apache.synapse.startup.quartz.StartUpController;
 import org.apache.synapse.task.TaskManager;
-import org.apache.synapse.util.xpath.ext.SynapseXpathFunctionContextProvider;
-import org.apache.synapse.util.xpath.ext.SynapseXpathVariableResolver;
-import org.apache.synapse.util.xpath.ext.XpathExtensionUtil;
 
 import javax.xml.namespace.QName;
 import java.io.IOException;
@@ -79,6 +77,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +85,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * The SynapseConfiguration holds the global configuration for a Synapse
@@ -195,7 +197,15 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     private Map<String, API> apiTable = Collections.synchronizedMap(new LinkedHashMap<String, API>());
 
     private Map<String, InboundEndpoint> inboundEndpointMap = new ConcurrentHashMap<String, InboundEndpoint>();
-    
+
+    /**
+     * Contains APIs, mapped against inbound endpoint names to which they are bound to, as specified.
+     * If no inbound endpoint binding is specified in an API,
+     * the API will be mapped against {@value ApiConstants#DEFAULT_BINDING_ENDPOINT_NAME}.
+     */
+    private Map<String, Map<String, API>> inboundApiMappings =
+            Collections.synchronizedMap(new LinkedHashMap<String, Map<String, API>>());
+
     /**
      * Description/documentation of the configuration
      */
@@ -413,16 +423,17 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     public synchronized void addAPI(String name, API api) {
         addAPI(name, api, true);
     }
-    
+
     public synchronized void addAPI(String name, API api, boolean reOrder) {
         if (!apiTable.containsKey(name)) {
             for (API existingAPI : apiTable.values()) {
                 if (api.getVersion().equals(existingAPI.getVersion()) && existingAPI.getContext().equals(api.getContext())) {
                     handleException("URL context: " + api.getContext() + " is already registered" +
-                                    " with the API: " + existingAPI.getName());
+                            " with the API: " + existingAPI.getName());
                 }
             }
             apiTable.put(name, api);
+            addInboundApiMappings(name, api);
             if (reOrder) {
                 reconstructAPITable();
             }
@@ -431,6 +442,30 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
             }
         } else {
             handleException("Duplicate resource definition by the name: " + name);
+        }
+    }
+
+    private void addInboundApiMappings(String name, API api) {
+        Collection<String> bindsTo = api.getInboundEndpointBindings();
+        if (bindsTo.isEmpty()) {
+            // Add default binding
+            if (inboundApiMappings.containsKey(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME)) {
+                inboundApiMappings.get(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME).put(name, api);
+            } else {
+                Map<String, API> apis = Collections.synchronizedMap(new LinkedHashMap<String, API>());
+                apis.put(name, api);
+                inboundApiMappings.put(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME, apis);
+            }
+        } else {
+            for (String inboundEndpointName : bindsTo) {
+                if (inboundApiMappings.containsKey(inboundEndpointName)) {
+                    inboundApiMappings.get(inboundEndpointName).put(name, api);
+                } else {
+                    Map<String, API> apis = Collections.synchronizedMap(new LinkedHashMap<String, API>());
+                    apis.put(name, api);
+                    inboundApiMappings.put(inboundEndpointName, apis);
+                }
+            }
         }
     }
 
@@ -445,6 +480,8 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                 }
             }        	
             apiTable.put(name, api);
+            removeInboundApiMappings(name);
+            addInboundApiMappings(name, api);
             reconstructAPITable();
             for (SynapseObserver o : observers) {
                 o.apiUpdated(api);
@@ -456,6 +493,10 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         return Collections.unmodifiableCollection(apiTable.values());
     }
 
+    public synchronized Map<String, Map<String, API>> getInboundApiMappings() {
+        return Collections.unmodifiableMap(inboundApiMappings);
+    }
+
     public synchronized API getAPI(String name) {
         return apiTable.get(name);
     }
@@ -464,11 +505,24 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         API api = apiTable.get(name);
         if (api != null) {
             apiTable.remove(name);
+            removeInboundApiMappings(name);
             for (SynapseObserver o : observers) {
                 o.apiRemoved(api);
             }
         } else {
             handleException("No API exists by the name: " + name);
+        }
+    }
+
+    private void removeInboundApiMappings(String apiName) {
+        Iterator<Map.Entry<String, Map<String, API>>> iterator = inboundApiMappings.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Map<String, API>> mappings = iterator.next();
+            Map<String, API> apis = mappings.getValue();
+            apis.remove(apiName);
+            if (apis.isEmpty()) {
+                iterator.remove(); // Clean-up if empty map is left after removal
+            }
         }
     }
 
@@ -1665,6 +1719,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
 						+ "] " + e.getMessage());
 			}
         }
+
         initImportedLibraries(se);
     }
 
@@ -2236,35 +2291,33 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
     }
     
     /**
-     * This method reconstructs the apiTable in descending order of context
+     * This method reconstructs the apiTable, and inboundApiMappings in descending order of context
      */
     public synchronized void reconstructAPITable() {
         if (log.isDebugEnabled()) {
             log.debug("Start re-constructing the API Table...");
         }
+        apiTable = getReConstructedApiMap(apiTable);
+        reconstructInboundApiMappings();
+    }
 
-        Map<String, API> duplicateAPITable = new LinkedHashMap<String, API>();
-        String[] contextValues = new String[apiTable.size()];
-        int i = 0;
-        for (API api : apiTable.values()) {
-            contextValues[i] = api.getContext();
-            i++;
+    private Map<String, API> getReConstructedApiMap(Map<String, API> originalApiMap) {
+        Stream<Map.Entry<String, API>> sorted = originalApiMap.entrySet().stream()
+                .sorted(Map.Entry
+                        .comparingByValue((api1, api2) -> api2.getContext().length() - api1.getContext().length()));
+        return sorted.collect(toMap(Map.Entry::getKey,
+                Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
+
+    private synchronized void reconstructInboundApiMappings() {
+        Map<String, Map<String, API>> duplicateInboundApiMappings =
+                Collections.synchronizedMap(new LinkedHashMap<String, Map<String, API>>());
+        for (Map.Entry<String, Map<String, API>> mapping : inboundApiMappings.entrySet()) {
+            Map<String, API> apis = mapping.getValue();
+            Map<String, API> reconstructedApis = getReConstructedApiMap(apis);
+            duplicateInboundApiMappings.put(mapping.getKey(), reconstructedApis);
         }
-        Arrays.sort(contextValues, new java.util.Comparator<String>() {
-            public int compare(String context1, String context2) {
-                return context1.length() - context2.length();
-            }
-        });
-        ArrayUtils.reverse(contextValues);
-        for (String context : contextValues) {
-            for (String mapKeys : apiTable.keySet()) {
-                if (context.equals(apiTable.get(mapKeys).getContext())) {
-                    duplicateAPITable.put(mapKeys, apiTable.get(mapKeys));
-                    break;
-                }
-            }
-        }
-        apiTable = duplicateAPITable;
+        inboundApiMappings = duplicateInboundApiMappings;
     }
 
 }

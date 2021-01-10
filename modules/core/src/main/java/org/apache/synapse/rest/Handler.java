@@ -23,7 +23,7 @@ import org.apache.synapse.MessageContext;
 import java.util.Map;
 
 
-public interface Handler {
+public interface Handler { // TODO don't move
 
     public boolean handleRequest(MessageContext messageContext);
 

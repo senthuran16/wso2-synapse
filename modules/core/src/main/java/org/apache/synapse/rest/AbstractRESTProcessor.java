@@ -28,7 +28,7 @@ import org.apache.synapse.SynapseException;
  * first invoke the canProcess method of the processor to validate whether this processor
  * can process the given request or not.
  */
-public abstract class AbstractRESTProcessor {
+public abstract class AbstractRESTProcessor { // TODO rename to AbstractRequestProcessor and move
 
     protected Log log = LogFactory.getLog(getClass());
 

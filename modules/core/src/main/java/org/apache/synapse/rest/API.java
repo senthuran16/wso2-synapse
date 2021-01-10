@@ -28,6 +28,8 @@ import org.apache.synapse.Mediator;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseArtifact;
 import org.apache.synapse.SynapseConstants;
+import org.apache.synapse.api.ApiConstants;
+import org.apache.synapse.api.ApiUtils;
 import org.apache.synapse.aspects.AspectConfigurable;
 import org.apache.synapse.aspects.AspectConfiguration;
 import org.apache.synapse.aspects.ComponentType;
@@ -51,6 +53,8 @@ import org.apache.synapse.transport.passthru.config.PassThroughConfiguration;
 import org.apache.synapse.util.logging.LoggingUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -76,6 +80,8 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
     private VersionStrategy versionStrategy = new DefaultStrategy(this);
 
     private String fileName;
+
+    private Set<String> inboundEndpointBindings = new HashSet<>();
 
     private  Log apiLog;
     private static final Log trace = LogFactory.getLog(SynapseConstants.TRACE_LOGGER);
@@ -247,7 +253,15 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
         return handlers.toArray(new Handler[handlers.size()]);
     }
 
-    boolean canProcess(MessageContext synCtx) {
+    public Set<String> getInboundEndpointBindings() {
+        return inboundEndpointBindings;
+    }
+
+    public void addInboundEndpointBinding(String inboundEndpointName) {
+        inboundEndpointBindings.add(inboundEndpointName);
+    }
+
+    public boolean canProcess(MessageContext synCtx) {
         if (synCtx.isResponse()) {
             String apiName = (String) synCtx.getProperty(RESTConstants.SYNAPSE_REST_API);
             String version = synCtx.getProperty(RESTConstants.SYNAPSE_REST_API_VERSION) == null ?
@@ -257,7 +271,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                 return false;
             }
         } else {
-            String path = RESTUtils.getFullRequestPath(synCtx);
+            String path = ApiUtils.getFullRequestPath(synCtx);
             if (null == synCtx.getProperty(RESTConstants.IS_PROMETHEUS_ENGAGED) &&
                     (!RESTUtils.matchApiPath(path, context))) {
                 auditDebug("API context: " + context + " does not match request URI: " + path);
@@ -317,7 +331,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
         return true;
     }
 
-    void process(MessageContext synCtx) {
+    public void process(MessageContext synCtx) {
 
         auditDebug("Processing message with ID: " + synCtx.getMessageID() + " through the " +
                     "API: " + name);
@@ -391,7 +405,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
             return;
         }
 
-        String path = RESTUtils.getFullRequestPath(synCtx);
+        String path = ApiUtils.getFullRequestPath(synCtx);
         String subPath;
         if (versionStrategy.getVersionType().equals(VersionStrategyFactory.TYPE_URL)) {
             //for URL based
@@ -415,7 +429,7 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
 
         Set<Resource> acceptableResources = new LinkedHashSet<Resource>();
         for (Resource r : resources.values()) {
-            if (r.canProcess(synCtx)) {
+            if (isBound(r, synCtx) && r.canProcess(synCtx)) {
                 acceptableResources.add(r);
             }
         }
@@ -475,6 +489,17 @@ public class API extends AbstractRESTProcessor implements ManagedLifecycle, Aspe
                 msgCtx.setProperty("NIO-ACK-Requested", true);
             }
         }
+    }
+
+    private boolean isBound(Resource resource, MessageContext synCtx) {
+        Collection<String> bindings = resource.getInboundEndpointBindings();
+        Object inboundEndpointName = synCtx.getProperty(SynapseConstants.INBOUND_ENDPOINT_NAME);
+        if (inboundEndpointName == null) {
+            // Caller is not an inbound endpoint
+            return bindings.isEmpty() || bindings.contains(ApiConstants.DEFAULT_BINDING_ENDPOINT_NAME);
+        }
+        String endpointName = inboundEndpointName.toString();
+        return bindings.contains(endpointName);
     }
 
     /**

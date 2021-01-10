@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public abstract class AbstractHandler implements Handler{
+public abstract class AbstractHandler implements Handler{ // TODO don't move
 
     /** A list of simple properties that would be set on the class before being used */
     protected final Map<String, Object> properties = new HashMap<String, Object>();

@@ -26,12 +26,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.SynapseException;
+import org.apache.synapse.api.ApiConstants;
 import org.apache.synapse.aspects.AspectConfiguration;
 import org.apache.synapse.commons.util.PropertyHelper;
 import org.apache.synapse.config.xml.XMLConfigConstants;
 import org.apache.synapse.rest.API;
 import org.apache.synapse.rest.Handler;
 import org.apache.synapse.rest.RESTConstants;
+import org.apache.synapse.rest.Resource;
 import org.apache.synapse.rest.version.VersionStrategy;
 import org.apache.synapse.util.CommentListUtil;
 
@@ -86,12 +88,16 @@ public class APIFactory {
             api.setSwaggerResourcePath(publishSwagger.getAttributeValue());
         }
 
+        addBindsTo(api, apiElt);
+
         Iterator resources = apiElt.getChildrenWithName(new QName(
                 XMLConfigConstants.SYNAPSE_NAMESPACE, "resource"));
         boolean noResources = true;
         while (resources.hasNext()) {
             OMElement resourceElt = (OMElement) resources.next();
-            api.addResource(ResourceFactory.createResource(resourceElt, properties));
+            Resource resource = ResourceFactory.createResource(resourceElt, properties);
+            validateBindsTo(api, resource);
+            api.addResource(resource);
             noResources = false;
         }
 
@@ -155,6 +161,28 @@ public class APIFactory {
         }
         CommentListUtil.populateComments(apiElt, api.getCommentsList());
         return api;
+    }
+
+    private static void addBindsTo(API api, OMElement apiElt) {
+        OMAttribute bindsTo = apiElt.getAttribute(new QName(ApiConstants.BINDS_TO));
+        if (bindsTo != null) {
+            String[] inboundEndpointNames = bindsTo.getAttributeValue().split(",");
+            for (String inboundEndpointName : inboundEndpointNames) {
+                String trimmedInboundEndpointName = inboundEndpointName.trim();
+                if (!trimmedInboundEndpointName.isEmpty()) {
+                    api.addInboundEndpointBinding(trimmedInboundEndpointName);
+                }
+            }
+        }
+    }
+
+    private static void validateBindsTo(API api, Resource resource) {
+        if (resource.getInboundEndpointBindings().isEmpty()) {
+            // Resource has no inbound endpoint bindings specified. Inherit 'binds-to' from the API.
+            resource.addAllInboundEndpointBindings(api.getInboundEndpointBindings());
+        } else if (!api.getInboundEndpointBindings().containsAll(resource.getInboundEndpointBindings())) {
+            handleException("A resource definition's 'binds-to' must be a subset of its API definition's 'binds-to'");
+        }
     }
 
     private static void defineHandler(API api, OMElement handlerElt) {
