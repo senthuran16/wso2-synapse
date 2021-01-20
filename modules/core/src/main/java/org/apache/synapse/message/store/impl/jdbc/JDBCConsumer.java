@@ -116,7 +116,6 @@ public class JDBCConsumer implements MessageConsumer {
     @Override
     public boolean cleanup() {
         currentMessageId = null;
-        isAlive = false;
         return true;
     }
 
@@ -128,6 +127,15 @@ public class JDBCConsumer implements MessageConsumer {
      */
     public boolean isAlive() {
         return isAlive;
+    }
+
+    /**
+     * Set isAlive flag in JDBC consumer
+     *
+     * @param  isAlive status
+     */
+    public void setAlive(boolean isAlive) {
+        this.isAlive = isAlive;
     }
 
     /**

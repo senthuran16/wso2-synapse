@@ -63,6 +63,15 @@ public class JmsConsumer implements MessageConsumer {
     private boolean isAlive;
 
     /**
+     * Set isAlive flag in JDBC consumer
+     *
+     * @param  isAlive status
+     */
+    public void setAlive(boolean isAlive) {
+        this.isAlive = isAlive;
+    }
+
+    /**
      * Constructor for JMS consumer
      *
      * @param store JMSStore associated to this JMS consumer
@@ -81,7 +90,7 @@ public class JmsConsumer implements MessageConsumer {
 
     public MessageContext receive() {
 
-        if (isAlive()) {
+        if (isAlive) {
             boolean connectionSuccess = checkAndTryConnect();
 
             if (!connectionSuccess) {
@@ -149,7 +158,6 @@ public class JmsConsumer implements MessageConsumer {
     }
 
     public boolean cleanup() throws SynapseException {
-        isAlive = false;
         if (logger.isDebugEnabled()) {
             logger.debug(getId() + " cleaning up...");
         }
