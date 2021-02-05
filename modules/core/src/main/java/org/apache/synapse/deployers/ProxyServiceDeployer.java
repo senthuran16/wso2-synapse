@@ -24,6 +24,7 @@ import org.apache.axis2.deployment.DeploymentException;
 import org.apache.axis2.description.AxisService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.SynapseException;
 import org.apache.synapse.transport.customlogsetter.CustomLogSetter;
 import org.apache.synapse.config.xml.MultiXMLConfigurationBuilder;
@@ -58,6 +59,7 @@ public class ProxyServiceDeployer extends AbstractSynapseArtifactDeployer {
         }
 
         try {
+            properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, getSynapseConfiguration());
             ProxyService proxy = ProxyServiceFactory.createProxy(artifactConfig, properties);
             proxy.setArtifactContainerName(customLogContent);
             if (proxy != null) {
@@ -136,6 +138,7 @@ public class ProxyServiceDeployer extends AbstractSynapseArtifactDeployer {
         }
 
         try {
+            properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, getSynapseConfiguration());
             ProxyService proxy = ProxyServiceFactory.createProxy(artifactConfig, properties);
             if (proxy != null) {
                 proxy.setLogSetterValue();

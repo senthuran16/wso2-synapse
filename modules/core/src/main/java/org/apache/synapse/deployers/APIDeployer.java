@@ -22,6 +22,7 @@ import org.apache.axiom.om.OMElement;
 import org.apache.axis2.deployment.DeploymentException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.transport.customlogsetter.CustomLogSetter;
 import org.apache.synapse.config.xml.MultiXMLConfigurationBuilder;
 import org.apache.synapse.config.xml.rest.APIFactory;
@@ -44,6 +45,7 @@ public class APIDeployer extends AbstractSynapseArtifactDeployer {
         }
 
         try {
+            properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, getSynapseConfiguration());
             API api = APIFactory.createAPI(artifactConfig, properties);
             api.setArtifactContainerName(customLogContent);
             if (api != null) {
@@ -78,17 +80,18 @@ public class APIDeployer extends AbstractSynapseArtifactDeployer {
     @Override
     public String updateSynapseArtifact(OMElement artifactConfig, String fileName, String existingArtifactName, Properties properties) {
 
-        API api = APIFactory.createAPI(artifactConfig, properties);
-
-        if (api != null) {
-            api.setLogSetterValue();
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("API update from file : " + fileName + " has started");
-        }
-
         try {
+            properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, getSynapseConfiguration());
+            API api = APIFactory.createAPI(artifactConfig, properties);
+
+            if (api != null) {
+                api.setLogSetterValue();
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("API update from file : " + fileName + " has started");
+            }
+
             if (api == null) {
                 handleSynapseArtifactDeploymentError("API update failed. The artifact " +
                         "defined in the file: " + fileName + " is not a valid API.");
