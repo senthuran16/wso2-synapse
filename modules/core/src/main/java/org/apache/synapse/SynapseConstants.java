@@ -579,4 +579,8 @@ public final class SynapseConstants {
     // Common property for all artifacts
     public static final String ARTIFACT_NAME = "ARTIFACT_NAME";
 
+    /**
+     * Synapse Configuration holder property name, used for handling synapse import deployments
+     */
+    public static final String SYNAPSE_CONFIGURATION = "SynapseConfiguration";
 }

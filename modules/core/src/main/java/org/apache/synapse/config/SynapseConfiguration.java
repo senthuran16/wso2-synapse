@@ -504,7 +504,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
 
         //noinspection ConstantConditions
         if (entry.getMapper() == null) {
-            entry.setMapper(new XMLToTemplateMapper());
+            entry.setMapper(new XMLToTemplateMapper(this));
         }
 
         if (entry.getType() == Entry.REMOTE_ENTRY) {
@@ -525,6 +525,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         } else {
             Object value = entry.getValue();
             if (value instanceof OMNode) {
+                properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, this);
                 Object object = entry.getMapper().getObjectFromOMNode(
                         (OMNode) value, getProperties());
                 if (object instanceof TemplateMediator) {
@@ -601,6 +602,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                     localRegistry.put(key, entry);
                     return (Mediator) o;
                 } else if (o instanceof OMNode) {
+                    properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, this);
                     Mediator m = (Mediator) MediatorFactoryFinder.getInstance().
                             getObjectFromOMNode((OMNode) o, properties);
                     if (m != null) {
@@ -612,6 +614,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         } else {
             Object value = entry.getValue();
             if (value instanceof OMNode) {
+                properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, this);
                 Object object = entry.getMapper().getObjectFromOMNode(
                         (OMNode) value, getProperties());
                 if (object instanceof Mediator) {
@@ -1061,6 +1064,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                     localRegistry.put(key, entry);
                     return (Endpoint) o;
                 } else if (o instanceof OMNode) {
+                    properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, this);
                     Endpoint e = (Endpoint) XMLToEndpointMapper.getInstance().
                             getObjectFromOMNode((OMNode) o, properties);
                     if (e != null) {
@@ -1072,6 +1076,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
         } else {
             Object value = entry.getValue();
             if (value instanceof OMNode) {
+                properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, this);
                 Object object = entry.getMapper().getObjectFromOMNode(
                         (OMNode) value, getProperties());
                 if (object instanceof Endpoint) {
@@ -2073,7 +2078,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
 
         //noinspection ConstantConditions
         if (entry.getMapper() == null) {
-            entry.setMapper(new XMLToTemplateMapper());
+            entry.setMapper(new XMLToTemplateMapper(this));
         }
 
         if (entry.getType() == Entry.REMOTE_ENTRY) {
@@ -2142,6 +2147,7 @@ public class SynapseConfiguration implements ManagedLifecycle, SynapseArtifact {
                     localRegistry.put(key, entry);
                     return (Mediator) o;
                 } else if (o instanceof OMNode) {
+                    properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, this);
                     Mediator m = (Mediator) MediatorFactoryFinder.getInstance().
                             getObjectFromOMNode((OMNode) o, properties);
                     if (m != null) {

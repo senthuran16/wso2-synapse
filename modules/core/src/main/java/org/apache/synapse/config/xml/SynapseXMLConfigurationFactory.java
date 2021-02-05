@@ -232,8 +232,8 @@ public class SynapseXMLConfigurationFactory implements ConfigurationFactory {
         String name = ele.getAttributeValue(new QName(XMLConfigConstants.NULL_NAMESPACE, "name"));
         if (name != null) {
             try {
-            	MediatorFactoryFinder.getInstance().setSynapseImportMap(config.getSynapseImports());
-                mediator = MediatorFactoryFinder.getInstance().getMediator(ele, properties);
+                properties.put(SynapseConstants.SYNAPSE_CONFIGURATION, config);
+                mediator = MediatorFactoryFinder.getInstance().getMediator(ele, properties, config);
                 if (mediator != null) {
                     config.addSequence(name, mediator);
                     // mandatory sequence is treated as a special sequence because it will be fetched for
@@ -262,7 +262,7 @@ public class SynapseXMLConfigurationFactory implements ConfigurationFactory {
         String name = ele.getAttributeValue(new QName(XMLConfigConstants.NULL_NAMESPACE, "name"));
         if (name != null) {
             try {
-                mediator = MediatorFactoryFinder.getInstance().getMediator(ele, properties);
+                mediator = MediatorFactoryFinder.getInstance().getMediator(ele, properties, config);
                 if (mediator != null) {
                     config.addSequenceTemplate(name, (TemplateMediator) mediator) ;
                 }
@@ -368,6 +368,7 @@ public class SynapseXMLConfigurationFactory implements ConfigurationFactory {
         //get corresponding library for loading imports if available
         Library synLib = config.getSynapseLibraries().get(libIndexString);
         if (synLib != null) {
+            synLib.getArtifacts().put(SynapseConstants.SYNAPSE_CONFIGURATION, config);
             LibDeployerUtils.loadLibArtifacts(synImport, synLib);
         }
         return synImport;
