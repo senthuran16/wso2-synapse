@@ -177,18 +177,18 @@ public class SynapseCallbackReceiver extends CallbackReceiver {
             if (callback != null) {
                 org.apache.synapse.MessageContext SynapseOutMsgCtx = callback.getSynapseOutMsgCtx();
                 ConcurrencyThrottlingUtils.decrementConcurrencyThrottleAccessController(SynapseOutMsgCtx);
-                boolean dropMessage = false;
+                boolean isMarkedForRemoval = false;
                 synchronized (callback) {
                     if (callback.isMarkedForRemoval()) {
                         //callback expired by the timeout handler
-                        dropMessage = true;
+                        isMarkedForRemoval = true;
                     } else {
                         callback.setMarkedForRemoval();
                     }
                 }
                 //callback expired by timeout handler, hence dropping the message without proceed further
-                if(dropMessage) {
-                    logWarnNoCallbackRegistered(messageID, messageCtx);
+                if (isMarkedForRemoval) {
+                    handleNoCallback(messageID, messageCtx);
                     return;
                 }
 
@@ -204,7 +204,7 @@ public class SynapseCallbackReceiver extends CallbackReceiver {
                 }
             } else {
                 // TODO invoke a generic synapse error handler for this message
-                logWarnNoCallbackRegistered(messageID, messageCtx);
+                handleNoCallback(messageID, messageCtx);
             }
 
         } else if (!messageCtx.isPropertyTrue(NhttpConstants.SC_ACCEPTED)){
@@ -705,7 +705,7 @@ public class SynapseCallbackReceiver extends CallbackReceiver {
      * @param messageID messageID
      * @param messageCtx messageContext
      */
-    private void logWarnNoCallbackRegistered(String messageID, MessageContext messageCtx){
+    private void handleNoCallback(String messageID, MessageContext messageCtx){
         log.warn("Synapse received a response for the request with message Id : " +
                 messageID + " and correlation_id : " + messageCtx.getProperty(CorrelationConstants
                 .CORRELATION_ID) + " But a callback is not registered (anymore) to process this response");
