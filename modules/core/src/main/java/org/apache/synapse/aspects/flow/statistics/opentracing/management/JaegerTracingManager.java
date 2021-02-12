@@ -20,6 +20,7 @@ package org.apache.synapse.aspects.flow.statistics.opentracing.management;
 
 import io.jaegertracing.Configuration;
 import io.jaegertracing.internal.JaegerTracer;
+import io.jaegertracing.internal.samplers.ConstSampler;
 import io.jaegertracing.zipkin.ZipkinV2Reporter;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.handling.span.JaegerSpanHandler;
 import org.apache.synapse.aspects.flow.statistics.opentracing.management.scoping.TracingScopeManager;
@@ -50,8 +51,8 @@ public class JaegerTracingManager implements OpenTracingManager {
     /**
      * Controls Zipkin spans.
      */
-    public JaegerTracingManager(ZipkinV2Reporter reporter) {
-        initializeTracer(reporter);
+    public JaegerTracingManager(ZipkinV2Reporter reporter, ConstSampler sampler) {
+        initializeTracer(sampler, reporter);
         resolveHandler();
     }
 
@@ -72,12 +73,12 @@ public class JaegerTracingManager implements OpenTracingManager {
 
     /**
      * Initializes the tracer object for Zipkin.
-     *
+     *  @param sampler
      * @param reporter Zipkin reporter.
      */
-    private void initializeTracer(ZipkinV2Reporter reporter) {
+    private void initializeTracer(ConstSampler sampler, ZipkinV2Reporter reporter) {
         String serviceName = getServiceName();
-        this.tracer = new JaegerTracer.Builder(serviceName).withReporter(reporter).build();
+        this.tracer = new JaegerTracer.Builder(serviceName).withSampler(sampler).withReporter(reporter).build();
     }
 
     @Override
