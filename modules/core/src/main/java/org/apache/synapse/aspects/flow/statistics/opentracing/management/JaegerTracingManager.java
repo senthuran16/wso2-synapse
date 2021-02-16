@@ -29,7 +29,9 @@ import org.apache.synapse.aspects.flow.statistics.opentracing.management.scoping
  */
 public class JaegerTracingManager implements OpenTracingManager {
 
-    private static final String SERVICE_NAME = "wso2-synapse";
+    //    private static final String SERVICE_NAME = "wso2-synapse";
+    private static final String SERVICE_NAME = System.getenv("SERVICE_NAME") != null && !System.getenv("SERVICE_NAME")
+            .isEmpty() ? System.getenv("SERVICE_NAME") : "wso2-synapse";
 
     /**
      * The common tracer object.

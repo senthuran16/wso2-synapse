@@ -75,6 +75,10 @@ public class SpanTagger {
             }
             if(statisticsLog.getComponentTypeToString() != null){
                 span.setTag("componentType", statisticsLog.getComponentTypeToString());
+
+                if(statisticsLog.getEndpoint() != null){
+                    span.setTag("Endpoint", String.valueOf(statisticsLog.getEndpoint().getJsonRepresentation()));
+                }
             }
             span.setTag("threadId", Thread.currentThread().getId());
             if(statisticsLog.getComponentId() != null){
@@ -83,6 +87,17 @@ public class SpanTagger {
             if(statisticsLog.getHashCode() != null){
                 span.setTag("hashcode", statisticsLog.getHashCode());
             }
+            if(statisticsLog.getTransportHeaderMap() != null){
+                span.setTag("Transport Headers", statisticsLog.getTransportHeaderMap().toString());
+            }
+
+            if(statisticsLog.getStatusCode() != null){
+                span.setTag("Status code", statisticsLog.getStatusCode());
+            }
+            if(statisticsLog.getStatusDescription() != null){
+                span.setTag("Status code", statisticsLog.getStatusDescription());
+            }
+
         }
     }
 }
