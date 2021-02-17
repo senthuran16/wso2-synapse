@@ -225,7 +225,8 @@ public class CallMediator extends AbstractMediator implements ManagedLifecycle {
         }
 
         // Set the last sequence fault handler for future use
-        synInCtx.setProperty(SynapseConstants.LAST_SEQ_FAULT_HANDLER, getLastSequenceFaultHandler(synInCtx));
+        Object faultHandlerBeforeInvocation = getLastSequenceFaultHandler(synInCtx);
+        synInCtx.setProperty(SynapseConstants.LAST_SEQ_FAULT_HANDLER, faultHandlerBeforeInvocation);
 
         // clear the message context properties related to endpoint in last service invocation
         Set keySet = synInCtx.getPropertyKeySet();
@@ -276,6 +277,12 @@ public class CallMediator extends AbstractMediator implements ManagedLifecycle {
 
             } else {
                 endpoint.send(synOutCtx);
+            }
+
+            // check whether fault sequence is already invoked
+            Object lastSequenceFaultHandler = getLastSequenceFaultHandler(synOutCtx);
+            if (lastSequenceFaultHandler != null && faultHandlerBeforeInvocation != lastSequenceFaultHandler) {
+                return false;
             }
         } catch (Exception e) {
             handleFault(synInCtx, e);
