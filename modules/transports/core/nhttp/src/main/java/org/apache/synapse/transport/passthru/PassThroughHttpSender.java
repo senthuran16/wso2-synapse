@@ -381,7 +381,9 @@ public class PassThroughHttpSender extends AbstractHandler implements TransportS
                     OverflowBlob overflowBlob = setStreamAsTempData(formatter, msgContext, format);
                     long messageSize = overflowBlob.getLength();
                     msgContext.setProperty(PassThroughConstants.PASSTROUGH_MESSAGE_LENGTH, messageSize);
-                    deliveryAgent.submit(msgContext, epr);
+                    if (!deliveryAgent.submit(msgContext, epr)) {
+                        return;
+                    }
                     if (!waitForReady(msgContext)) {
                         return;
                     }
@@ -401,7 +403,9 @@ public class PassThroughHttpSender extends AbstractHandler implements TransportS
                     handleException("IO while building message", e);
                 }
             } else {
-                deliveryAgent.submit(msgContext, epr);
+                if (!deliveryAgent.submit(msgContext, epr)) {
+                    return;
+                }
                 if (!waitForReady(msgContext)) {
                     return;
                 }
@@ -419,7 +423,9 @@ public class PassThroughHttpSender extends AbstractHandler implements TransportS
                 }
             }
         } else {
-            deliveryAgent.submit(msgContext, epr);
+            if (!deliveryAgent.submit(msgContext, epr)) {
+                return;
+            }
         }
     }
 

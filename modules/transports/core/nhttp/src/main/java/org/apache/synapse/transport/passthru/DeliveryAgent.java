@@ -29,6 +29,8 @@ import org.apache.http.nio.NHttpClientConnection;
 import org.apache.synapse.commons.CorrelationConstants;
 import org.apache.synapse.transport.http.conn.ProxyConfig;
 import org.apache.synapse.transport.http.conn.SynapseDebugInfoHolder;
+import org.apache.synapse.transport.passthru.config.PassThroughConfigPNames;
+import org.apache.synapse.transport.passthru.config.PassThroughConfiguration;
 import org.apache.synapse.transport.passthru.config.TargetConfiguration;
 import org.apache.synapse.transport.passthru.connections.TargetConnections;
 import org.apache.synapse.transport.passthru.util.TargetRequestFactory;
@@ -72,7 +74,7 @@ public class DeliveryAgent {
     private ProxyConfig proxyConfig;
     
     /** The maximum number of messages that can wait for a connection */
-    private int maxWaitingMessages = Integer.MAX_VALUE;
+    private int maxWaitingMessages;
 
     private TargetErrorHandler targetErrorHandler;
 
@@ -92,6 +94,9 @@ public class DeliveryAgent {
         this.targetConnections = targetConnections;
         this.proxyConfig = proxyConfig;
         this.targetErrorHandler = new TargetErrorHandler(targetConfiguration);
+        PassThroughConfiguration conf = PassThroughConfiguration.getInstance();
+        this.maxWaitingMessages = conf.getIntProperty(PassThroughConfigPNames.MAX_MESSAGES_PER_HOST_PORT,
+                Integer.MAX_VALUE);
     }
 
 
@@ -104,8 +109,11 @@ public class DeliveryAgent {
      * @param msgContext the message context to be sent
      * @param epr the endpoint to which the message should be sent
      * @throws AxisFault if an error occurs
+     *
+     * @return false if connection can not be acquired due to connection limit exceeds or queue limit exceeds
+     *         else return true
      */
-    public void submit(MessageContext msgContext, EndpointReference epr)
+    public boolean submit(MessageContext msgContext, EndpointReference epr)
             throws AxisFault {
         try {
             if (log.isDebugEnabled()) {
@@ -138,6 +146,7 @@ public class DeliveryAgent {
 
             // first we queue the message
             Queue<MessageContext> queue = null;
+            NHttpClientConnection conn = null;
             lock.lock();
             try {
                 queue = waitingMessages.get(route);
@@ -145,23 +154,29 @@ public class DeliveryAgent {
                     queue = new ConcurrentLinkedQueue<MessageContext>();
                     waitingMessages.put(route, queue);
                 }
-                if (queue.size() == maxWaitingMessages) {
-                    MessageContext msgCtx = queue.poll();
-                    msgCtx.setProperty(PassThroughConstants.INTERNAL_EXCEPTION_ORIGIN,
+                if (queue.size() >= maxWaitingMessages) {
+                    msgContext.setProperty(PassThroughConstants.INTERNAL_EXCEPTION_ORIGIN,
                             PassThroughConstants.INTERNAL_ORIGIN_ERROR_HANDLER);
-                    targetErrorHandler.handleError(msgCtx,
-                            ErrorCodes.CONNECTION_TIMEOUT,
-                            "Error connecting to the back end",
-                            null,
-                            ProtocolState.REQUEST_READY);
+                    log.warn("Delivery agent queue length exceeds the maximum number of waiting messages");
+                    if (msgContext != null) {
+                        targetErrorHandler.handleError(msgContext, ErrorCodes.CONNECTION_TIMEOUT,
+                                "Number of queued messages exceeds the limit",
+                                null, ProtocolState.REQUEST_READY);
+                    }
+                    return false;
                 }
 
                 queue.add(msgContext);
+                conn = targetConnections.getConnection(route, msgContext, targetErrorHandler, queue);
+                if (conn == null && msgContext != null && "true".equalsIgnoreCase(
+                        (String) msgContext.getProperty(PassThroughConstants.CONNECTION_LIMIT_EXCEEDS))) {
+                    msgContext.removeProperty(PassThroughConstants.CONNECTION_LIMIT_EXCEEDS);
+                    return false;
+                }
             } finally {
                 lock.unlock();
             }
 
-            NHttpClientConnection conn = targetConnections.getConnection(route);
             if (conn != null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Connection found from pool for MessageID: " + msgContext.getMessageID() +
@@ -179,6 +194,7 @@ public class DeliveryAgent {
         } catch (MalformedURLException e) {
             handleException("Malformed URL in the target EPR", e);
         }
+        return true;
     }
 
     public void errorConnecting(HttpRoute route, int errorCode, String message, Exception exceptionToRaise) {
