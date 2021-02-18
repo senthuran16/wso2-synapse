@@ -95,7 +95,7 @@ public class SpanTagger {
                 span.setTag("Status code", statisticsLog.getStatusCode());
             }
             if(statisticsLog.getStatusDescription() != null){
-                span.setTag("Status code", statisticsLog.getStatusDescription());
+                span.setTag("Status description", statisticsLog.getStatusDescription());
             }
 
         }
