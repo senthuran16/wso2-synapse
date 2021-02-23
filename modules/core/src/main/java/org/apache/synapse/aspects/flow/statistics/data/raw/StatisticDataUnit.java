@@ -110,7 +110,7 @@ public class StatisticDataUnit extends BasicStatisticDataUnit {
 	private Endpoint endpoint;
 
 	/**
-	 * Transport headers map.
+	 * Transport headers map for the component.
 	 */
 	private Map transportHeaderMap;
 
