@@ -159,6 +159,15 @@ public class RabbitMQConsumer implements MessageConsumer {
         return true;
     }
 
+	/**
+	 * Set availability of connectivity with the message store
+	 *
+	 * @param  isAlive connection availability.
+	 */
+	@Override
+	public void setAlive(boolean isAlive) {
+	}
+
     public RabbitMQConsumer setConnection(Connection connection) {
 		this.connection = connection;
 		return this;

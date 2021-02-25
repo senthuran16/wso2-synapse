@@ -83,8 +83,9 @@ public class JDBCConsumer implements MessageConsumer {
             }
             return msg;
         } else {
-            if (logger.isDebugEnabled()){
-                logger.debug("Trying to receive messages from a consumer that is not alive.");
+            if (logger.isDebugEnabled()) {
+                logger.debug("Trying to receive messages from a consumer that is not alive. Id: " + getId()
+                        + ", store: " + store.getName());
             }
             return null;
         }
@@ -115,7 +116,6 @@ public class JDBCConsumer implements MessageConsumer {
     @Override
     public boolean cleanup() {
         currentMessageId = null;
-        isAlive = false;
         return true;
     }
 
@@ -127,6 +127,15 @@ public class JDBCConsumer implements MessageConsumer {
      */
     public boolean isAlive() {
         return isAlive;
+    }
+
+    /**
+     * Set isAlive flag in JDBC consumer
+     *
+     * @param  isAlive status
+     */
+    public void setAlive(boolean isAlive) {
+        this.isAlive = isAlive;
     }
 
     /**

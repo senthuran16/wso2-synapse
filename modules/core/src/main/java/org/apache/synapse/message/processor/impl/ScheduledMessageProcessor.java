@@ -339,6 +339,9 @@ public abstract class ScheduledMessageProcessor extends AbstractMessageProcessor
 		}
 		if (getMessageConsumer() != null && !messageConsumers.isEmpty()) {
 			cleanupLocalResources();
+			for (MessageConsumer msgConsumer : messageConsumers){
+				msgConsumer.setAlive(false);
+			}
 		} else {
 			logger.warn("[" + getName() + "] Could not find the message consumer to cleanup.");
 		}

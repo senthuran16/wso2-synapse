@@ -83,6 +83,15 @@ public class InMemoryConsumer implements MessageConsumer {
         return true;
     }
 
+    /**
+     * Set availability of connectivity with the message store
+     *
+     * @param  isAlive connection availability.
+     */
+    @Override
+    public void setAlive(boolean isAlive) {
+    }
+
     public void setId(int id) {
         idString = "[" + store.getName() + "-C-" + id + "]";
     }
