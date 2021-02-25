@@ -471,8 +471,21 @@ public class Target {
         org.apache.axis2.context.MessageContext axis2MessageCtx = axis2smc.getAxis2MessageContext();
         // handle complete removal of the message body.
         String jsonPathString = synapseJsonPath.toString();
+        if (InlineExpressionUtil.checkForInlineExpressions(jsonPathString)) {
+            try {
+                if (jsonPathString.startsWith("json-eval(")) {
+                    jsonPathString = jsonPathString.substring(10, jsonPathString.length() - 1);
+                }
+                jsonPathString = InlineExpressionUtil.replaceDynamicValues(synCtx, jsonPathString);
+                jsonPathString = jsonPathString.replaceAll("^\"|\"$", "");
+            } catch (Exception e) {
+                log.error("Error occurred while evaluating JSONPath", e);
+            }
+        }
         // Removing "json-eval(" and extract the expression.
-        jsonPathString = jsonPathString.substring(10, jsonPathString.length() - 1);
+        if (jsonPathString.startsWith("json-eval(")) {
+            jsonPathString = jsonPathString.substring(10, jsonPathString.length() - 1);
+        }
         // multi expression support ( accept comma separated list of JSON-path expressions )
         String[] jsonPathArray = jsonPathString.split(",");
         String jsonString = IOUtils.toString(JsonUtil.getJsonPayload(axis2MessageCtx));
