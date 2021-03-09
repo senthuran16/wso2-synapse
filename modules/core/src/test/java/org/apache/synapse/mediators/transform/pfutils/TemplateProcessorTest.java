@@ -103,15 +103,26 @@ public class TemplateProcessorTest {
             Map.Entry<String, ArgumentDetails> inferReplacementTypeStringAndMediaTypeJson2 =
                     Maps.immutableEntry(
                             "{\"name\":\"john smith\"}",
-                            getArgumentDetails(X_PATH, false, false));
+                            getArgumentDetails(X_PATH, false, true));
             Map.Entry<String, ArgumentDetails> inferReplacementTypeStringAndMediaTypeJson3 =
                     Maps.immutableEntry(
                             "{\"name\":\"hello\\\\nworld\"}",
-                            getArgumentDetails(X_PATH, false, false));
+                            getArgumentDetails(X_PATH, false, true));
+
             Map.Entry<String, ArgumentDetails> inferReplacementTypeStringAndMediaTypeJson4 =
                     Maps.immutableEntry(
                             "\"hello\\\\nworld\"",
                             getArgumentDetails(JSON_PATH, false, false));
+
+            // With literal false
+            Map.Entry<String, ArgumentDetails> inferReplacementTypeStringAndMediaTypeJson5 =
+                    Maps.immutableEntry(
+                            "{\"name\":\"john smith\"}",
+                            getArgumentDetails(X_PATH, false, false));
+            Map.Entry<String, ArgumentDetails> inferReplacementTypeStringAndMediaTypeJson6 =
+                    Maps.immutableEntry(
+                            "{\"name\":\"hello\\\\nworld\"}",
+                            getArgumentDetails(X_PATH, false, false));
 
             // InferReplacementTypeStringAndMediaTypeJson and QUOTE_STRING_IN_PAYLOAD_FACTORY_JSON set to true
             Map.Entry<String, ArgumentDetails> inferReplacementTypeStringAndMediaTypeJsonWithForce_string_quote =
@@ -136,6 +147,8 @@ public class TemplateProcessorTest {
                     {JSON_TYPE, inferReplacementTypeStringAndMediaTypeJson3, synCtx,
                             "{\\\\\"name\\\\\":\\\\\"hello\\\\\\\\nworld\\\\\"}"},
                     {JSON_TYPE, inferReplacementTypeStringAndMediaTypeJson4, synCtx, "\\\\\"hello\\\\\\\\nworld\\\\\""},
+                    {JSON_TYPE, inferReplacementTypeStringAndMediaTypeJson5, synCtx, "{\"name\":\"john smith\"}"},
+                    {JSON_TYPE, inferReplacementTypeStringAndMediaTypeJson6, synCtx, "{\"name\":\"hello\\\\nworld\"}"},
                     {JSON_TYPE, inferReplacementTypeStringAndMediaTypeJsonWithForce_string_quote, synCtx2,
                             "\"\\\\\"hello\\\\\\\\nworld\\\\\"\""},
             });
