@@ -188,7 +188,7 @@ public abstract class TemplateProcessor {
                     inferReplacementType(replacementEntry).equals(STRING_TYPE)) {
                 replacementValue = escapeSpecialChars(replacementValue);
                 // Check for following property which will force the string to include quotes
-                if (!trimmedReplacementValue.startsWith("{") && !trimmedReplacementValue.startsWith("[")) {
+                if (!isJson(trimmedReplacementValue)) {
                     Object force_string_quote = synCtx.getProperty(QUOTE_STRING_IN_PAYLOAD_FACTORY_JSON);
                     // skip double quotes if replacement is boolean or null or valid json number
                     if (force_string_quote != null && ((String) force_string_quote).equalsIgnoreCase("true")
@@ -198,13 +198,6 @@ public abstract class TemplateProcessor {
                         replacementValue = "\"" + replacementValue + "\"";
                     }
                 }
-            } else if (
-                    (mediaType.equals(JSON_TYPE) && inferReplacementType(replacementEntry).equals(JSON_TYPE)) &&
-                            (!trimmedReplacementValue.startsWith("{") &&
-                                    !trimmedReplacementValue.startsWith("["))) {
-                // This is to handle only the string value
-                replacementValue =
-                        replacementValue.replaceAll("\"", ESCAPE_DOUBLE_QUOTE_WITH_NINE_BACK_SLASHES);
             }
         }
         return replacementValue;
@@ -321,6 +314,9 @@ public abstract class TemplateProcessor {
         } else if (entry.getValue().getPathType().equals(SynapsePath.X_PATH)
                 && entry.getValue().isXml()) {
             return XML_TYPE;
+        } else if (entry.getValue().getPathType().equals(SynapsePath.X_PATH)
+                && isJson(entry.getKey())) {
+            return JSON_TYPE;
         } else if (entry.getValue().getPathType().equals(SynapsePath.X_PATH)
                 && !entry.getValue().isXml()) {
             return STRING_TYPE;
