@@ -41,7 +41,7 @@ public class FilePropertyLoader {
     private static FilePropertyLoader fileLoaderInstance;
 
     public static FilePropertyLoader getInstance() {
-        if ( null == fileLoaderInstance) {
+        if (null == fileLoaderInstance) {
             fileLoaderInstance = new FilePropertyLoader();
             fileLoaderInstance.loadPropertiesFile();
         }
@@ -56,8 +56,11 @@ public class FilePropertyLoader {
 
         String filePath = System.getProperty(FILE_PROPERTY_PATH);
 
-        if ( null == filePath || filePath.isEmpty()) {
-            throw new SynapseCommonsException(FILE_PROPERTY_PATH + " is empty or null");
+        if (null == filePath || filePath.isEmpty()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(FILE_PROPERTY_PATH + " is empty or null");
+            }
+            return;
         }
         if (("default").equals(filePath)) {
             filePath = System.getProperty(CONF_LOCATION) + File.separator + DEFAULT_PROPERTY_FILE;
@@ -87,6 +90,9 @@ public class FilePropertyLoader {
     }
 
     public static Map getPropertyMap() {
+        if (propertyMap == null) {
+            FilePropertyLoader.getInstance();
+        }
         return propertyMap;
     }
 }

@@ -56,7 +56,7 @@ public class GetPropertyFunction implements Function , XPathFunction {
 
     public static final String NULL_STRING = "";
 
-    public static Map propertyMap = FilePropertyLoader.getPropertyMap();
+    public static Map filePropertyMap = FilePropertyLoader.getPropertyMap();
 
     /** Synapse Message context*/
     private final MessageContext synCtx;
@@ -366,13 +366,9 @@ public class GetPropertyFunction implements Function , XPathFunction {
             }
 
         } else if (XMLConfigConstants.SCOPE_FILE.equals(scope)) {
-            if (propertyMap == null) {
-                FilePropertyLoader propertyLoader = FilePropertyLoader.getInstance();
-                propertyMap = propertyLoader.getPropertyMap();
-            }
-            String propVal = (String) propertyMap.get(key);
+            Object propVal = filePropertyMap.get(key);
             if (propVal != null) {
-                return propVal;
+                return (String) propVal;
             } else {
                 if (traceOrDebugOn) {
                     traceOrDebug(traceOn, "Property " + key + " not found in properties file");
