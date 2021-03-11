@@ -36,7 +36,7 @@ public class FilePropertyLoader {
     private static final String CONF_LOCATION = "conf.location";
     public static final String FILE_PROPERTY_PATH = "properties.file.path";
     private static final String DEFAULT_PROPERTY_FILE = "file.properties";
-    private Map propertyMap;
+    private static Map propertyMap;
 
     private static FilePropertyLoader fileLoaderInstance;
 
@@ -84,5 +84,9 @@ public class FilePropertyLoader {
         } else {
             throw new SynapseCommonsException("File cannot found in " + filePath);
         }
+    }
+
+    public static Map getPropertyMap() {
+        return propertyMap;
     }
 }
