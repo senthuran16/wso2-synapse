@@ -60,6 +60,7 @@ public class FilePropertyLoader {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(FILE_PROPERTY_PATH + " is empty or null");
             }
+            propertyMap = new HashMap();
             return;
         }
         if (("default").equals(filePath)) {
