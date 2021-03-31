@@ -763,6 +763,8 @@ public class TargetHandler implements NHttpClientEventHandler {
             log.warn("Exception occurred while reading the response " + getConnectionLoggingInfo(conn));
         } else if (state == ProtocolState.REQUEST_DONE) {
             log.warn("Exception occurred before reading the response " + getConnectionLoggingInfo(conn));
+        } else if (state == ProtocolState.RESPONSE_DONE) {
+            return;
         }
         
         if (ex instanceof IOException) {
