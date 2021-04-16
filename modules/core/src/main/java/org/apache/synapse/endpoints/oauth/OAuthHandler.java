@@ -76,7 +76,7 @@ public abstract class OAuthHandler {
                 }
             });
         } catch (ExecutionException e) {
-            throw new OAuthException(e);
+            throw new OAuthException(e.getCause());
         }
     }
 
