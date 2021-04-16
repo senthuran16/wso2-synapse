@@ -20,6 +20,7 @@ package org.apache.synapse.endpoints.oauth;
 
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.util.UIDGenerator;
+import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,6 +39,7 @@ import org.jaxen.JaxenException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -364,5 +366,38 @@ public class OAuthUtils {
             return evaluateExpression(expressionStr, messageContext);
         }
         return value;
+    }
+
+    /**
+     * Method to append 401 status code to NON_ERROR_HTTP_STATUS_CODES property
+     *
+     * @param synCtx MessageContext of the request
+     */
+    public static void append401HTTPSC(MessageContext synCtx) {
+
+        org.apache.axis2.context.MessageContext axis2Ctx =
+                ((Axis2MessageContext) synCtx).getAxis2MessageContext();
+
+        Object nonErrorCodesInMsgCtx = axis2Ctx.getProperty(HTTPConstants.NON_ERROR_HTTP_STATUS_CODES);
+        if (nonErrorCodesInMsgCtx instanceof Set) {
+            Set<Integer> nonErrorCodes = (Set<Integer>) nonErrorCodesInMsgCtx;
+            nonErrorCodes.add(OAuthConstants.HTTP_SC_UNAUTHORIZED);
+            axis2Ctx.setProperty(HTTPConstants.NON_ERROR_HTTP_STATUS_CODES,
+                    nonErrorCodes);
+        } else if (nonErrorCodesInMsgCtx instanceof String) {
+            String strNonErrorCodes = ((String) nonErrorCodesInMsgCtx).trim();
+            if (strNonErrorCodes.contains(String.valueOf(OAuthConstants.HTTP_SC_UNAUTHORIZED))) {
+                return;
+            }
+            if (!strNonErrorCodes.endsWith(",")) {
+                strNonErrorCodes += ",";
+            }
+            strNonErrorCodes += String.valueOf(OAuthConstants.HTTP_SC_UNAUTHORIZED);
+            axis2Ctx.setProperty(HTTPConstants.NON_ERROR_HTTP_STATUS_CODES,
+                    strNonErrorCodes);
+        } else {
+            axis2Ctx.setProperty(HTTPConstants.NON_ERROR_HTTP_STATUS_CODES,
+                    String.valueOf(OAuthConstants.HTTP_SC_UNAUTHORIZED));
+        }
     }
 }
