@@ -89,7 +89,6 @@ public abstract class AbstractListMediator extends AbstractMediator
             for (int i = mediatorPosition; i < mediators.size(); i++) {
                 // ensure correct trace state after each invocation of a mediator
                 Mediator mediator = mediators.get(i);
-
                 if (sequenceContentAware && (mediator.isContentAware() || isStreamXpathEnabled) &&
                         (!Boolean.TRUE.equals(synCtx.getProperty(PassThroughConstants.MESSAGE_BUILDER_INVOKED)))) {
                     buildMessage(synCtx, synLog);
