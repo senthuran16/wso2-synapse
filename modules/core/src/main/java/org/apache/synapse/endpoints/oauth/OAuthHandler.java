@@ -153,4 +153,8 @@ public abstract class OAuthHandler {
 
         this.requestParametersMap = requestParameters;
     }
+
+    public Map<String, String> getRequestParametersMap() {
+        return requestParametersMap;
+    }
 }
