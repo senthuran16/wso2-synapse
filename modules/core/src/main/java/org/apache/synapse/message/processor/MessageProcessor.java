@@ -175,4 +175,8 @@ public interface MessageProcessor extends ManagedLifecycle, Nameable, SynapseArt
      * @param artifactContainerName
      */
     public void setArtifactContainerName(String artifactContainerName);
+
+    public void cleanUpRemotely();
+
+    public void resumeRemotely();
 }
