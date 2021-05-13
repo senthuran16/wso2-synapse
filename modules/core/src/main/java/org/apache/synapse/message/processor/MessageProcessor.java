@@ -176,7 +176,14 @@ public interface MessageProcessor extends ManagedLifecycle, Nameable, SynapseArt
      */
     public void setArtifactContainerName(String artifactContainerName);
 
-    public void cleanUpRemotely();
+    /**
+     * Execute clean up tasks of a message processor which were
+     * deactivated remotely in cluster mode
+     */
+    public void cleanUpDeactivatedProcessors();
 
+    /**
+     * Execute resume tasks of a message processor in cluster mode
+     */
     public void resumeRemotely();
 }

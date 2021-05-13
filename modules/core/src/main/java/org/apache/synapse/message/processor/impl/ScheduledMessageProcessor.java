@@ -422,8 +422,7 @@ public abstract class ScheduledMessageProcessor extends AbstractMessageProcessor
 
     @Override
     public void pauseService() {
-
-    	terminate();
+		terminate();
 		for (int i = 0; i < memberCount; i++) {
 			taskManager.pause(TASK_PREFIX + name + SYMBOL_UNDERSCORE + i);
 		}
@@ -587,7 +586,8 @@ public abstract class ScheduledMessageProcessor extends AbstractMessageProcessor
             registry.delete(REG_PROCESSOR_BASE_PATH + getName());
         }
     }
-    public void terminate() {
+
+	private void terminate() {
 		if (task instanceof ForwardingService) {
 			((ForwardingService) task).terminate();
 		} else if (task instanceof SamplingService) {
@@ -598,10 +598,13 @@ public abstract class ScheduledMessageProcessor extends AbstractMessageProcessor
 	}
 
 	@Override
-	public void cleanUpRemotely() {
-		terminate();
-		setMessageProcessorState(ProcessorState.PAUSED);
-		cleanupLocalResources();
+	public void cleanUpDeactivatedProcessors() {
+		try {
+			terminate();
+			setMessageProcessorState(ProcessorState.PAUSED);
+		} finally {
+			cleanupLocalResources();
+		}
 	}
 
 	@Override

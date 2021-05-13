@@ -342,14 +342,21 @@ public class MiscellaneousUtil {
         throw new SynapseCommonsException(msg, ex);
     }
 
-    public static boolean isTaskOfMessageProcessor(String taskName) {
-    	if (taskName.startsWith(MSMP_PREFIX)) {
-    		return true;
-		}
-    	return false;
+	/**
+	 * Checks if the task belongs to a message processor
+	 * @param taskName task name
+	 * @return true if task belongs to a message processor
+	 */
+	public static boolean isTaskOfMessageProcessor(String taskName) {
+		return taskName.startsWith(MSMP_PREFIX);
 	}
 
+	/**
+	 * Provides the name of the corresponding message processor of a task
+	 * @param taskName task name
+	 * @return message processor name
+	 */
 	public static String getMessageProcessorName(String taskName) {
-    	return StringUtils.substringBetween(taskName, "MSMP_", "_");
+		return taskName.substring(MSMP_PREFIX.length(), taskName.lastIndexOf("_"));
 	}
 }
