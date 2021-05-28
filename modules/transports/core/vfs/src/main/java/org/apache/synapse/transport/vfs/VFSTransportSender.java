@@ -66,9 +66,6 @@ public class VFSTransportSender extends AbstractTransportSender implements Manag
     private boolean globalFileLockingFlag = true;
 
     private VFSParamDTO vfsParamDTO = null;
-
-    private final static String UPDATE_LAST_MODIFIED = "transport.vfs.UpdateLastModified";
-
     /**
      * Map to hold lock object for each host per service when operating in synchronous write mode
      */
@@ -361,7 +358,8 @@ public class VFSTransportSender extends AbstractTransportSender implements Manag
 
             //setting last modified
             Long lastModified = VFSUtils.getLastModified(msgContext);
-            String updateLastModifiedParam = UriParser.extractQueryParams(responseFile.getName().getURI()).get(UPDATE_LAST_MODIFIED);
+            String updateLastModifiedParam = UriParser.extractQueryParams(responseFile.getName().getURI())
+                    .get(VFSConstants.UPDATE_LAST_MODIFIED);
             responseFile.setUpdateLastModified(Boolean.parseBoolean(updateLastModifiedParam));
             if (lastModified != null && responseFile.getUpdateLastModified()) {
                 try {

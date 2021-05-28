@@ -60,6 +60,7 @@ public class PollTableEntry extends AbstractPollTableEntry {
     /** Content-Type to use for the message */
     private String contentType;
 
+    /** Should the last updated time timestamp be updated */
     private boolean updateLastModified;
 
     /** action to take after a successful poll */
@@ -513,7 +514,8 @@ public class PollTableEntry extends AbstractPollTableEntry {
             contentType = ParamUtils.getRequiredParam(params,
                                                       VFSConstants.TRANSPORT_FILE_CONTENT_TYPE);
 
-            updateLastModified = ParamUtils.getOptionalParamBoolean(params, VFSConstants.UPDATE_LAST_MODIFIED, true);
+            updateLastModified = ParamUtils.getOptionalParamBoolean(params,
+                                                      VFSConstants.UPDATE_LAST_MODIFIED, true);
             String option = ParamUtils.getOptionalParam(
                     params, VFSConstants.TRANSPORT_FILE_ACTION_AFTER_PROCESS);
             if (option == null) {
