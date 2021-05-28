@@ -35,6 +35,7 @@ import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.*;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
+import org.apache.commons.vfs2.provider.UriParser;
 import org.apache.synapse.commons.vfs.VFSConstants;
 import org.apache.synapse.commons.vfs.VFSParamDTO;
 import org.apache.synapse.commons.vfs.VFSUtils;
@@ -65,6 +66,8 @@ public class VFSTransportSender extends AbstractTransportSender implements Manag
     private boolean globalFileLockingFlag = true;
 
     private VFSParamDTO vfsParamDTO = null;
+
+    private final static String UPDATE_LAST_MODIFIED = "transport.vfs.UpdateLastModified";
 
     /**
      * Map to hold lock object for each host per service when operating in synchronous write mode
@@ -358,7 +361,9 @@ public class VFSTransportSender extends AbstractTransportSender implements Manag
 
             //setting last modified
             Long lastModified = VFSUtils.getLastModified(msgContext);
-            if (lastModified != null) {
+            String updateLastModifiedParam = UriParser.extractQueryParams(responseFile.getName().getURI()).get(UPDATE_LAST_MODIFIED);
+            responseFile.setUpdateLastModified(Boolean.parseBoolean(updateLastModifiedParam));
+            if (lastModified != null && responseFile.getUpdateLastModified()) {
                 try {
                     if (log.isDebugEnabled()) {
                         log.debug("Set last modified to " + lastModified);
