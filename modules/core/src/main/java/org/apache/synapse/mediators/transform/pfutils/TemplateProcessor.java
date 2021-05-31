@@ -200,7 +200,7 @@ public abstract class TemplateProcessor {
                 }
             }
         }
-        return replacementValue;
+        return replacementValue.replaceAll("&quot;", "");
     }
 
     /**
