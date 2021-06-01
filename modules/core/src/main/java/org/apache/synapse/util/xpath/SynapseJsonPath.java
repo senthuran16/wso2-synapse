@@ -295,7 +295,7 @@ public class SynapseJsonPath extends SynapsePath {
         }
         JsonElement jsonElement = (JsonElement) input;
         if (jsonElement.isJsonPrimitive()) {
-            return jsonElement;
+            return jsonElement.getAsString();
         } else if(jsonElement.isJsonObject()) {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             if (jsonObject.has("members")) {
