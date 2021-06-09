@@ -66,6 +66,10 @@ public class JaegerSpanHandler implements OpenTracingSpanHandler {
         this.tracingScopeManager = tracingScopeManager;
     }
 
+    public TracingScopeManager getTracingScopeManager() {
+        return tracingScopeManager;
+    }
+
     @Override
     public void handleOpenEntryEvent(StatisticDataUnit statisticDataUnit, MessageContext synCtx) {
         startSpanOrBufferSequenceContinuationState(statisticDataUnit, synCtx);
