@@ -74,6 +74,10 @@ public class JaegerTracingManager implements OpenTracingManager {
         return this.handler;
     }
 
+    public JaegerTracer getTracer() {
+        return tracer;
+    }
+
     private static String getServiceName() {
         return SERVICE_NAME;
     }
