@@ -223,7 +223,9 @@ public class PropertyMediator extends AbstractMediator {
                 }
             } else if (XMLConfigConstants.SCOPE_SYSTEM.equals(scope)
                     && synCtx instanceof Axis2MessageContext) {
-                System.setProperty(name, resultValue.toString());
+                if (resultValue != null) {
+                    System.setProperty(name, resultValue.toString());
+                }
             }
 
         } else {
