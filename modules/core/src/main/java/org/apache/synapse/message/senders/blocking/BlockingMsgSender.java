@@ -50,6 +50,7 @@ import org.apache.synapse.endpoints.EndpointDefinition;
 import org.apache.synapse.endpoints.IndirectEndpoint;
 import org.apache.synapse.endpoints.ResolvingEndpoint;
 import org.apache.synapse.endpoints.TemplateEndpoint;
+import org.apache.synapse.util.MediatorPropertyUtils;
 import org.apache.synapse.util.MessageHelper;
 import org.apache.synapse.util.xpath.SynapseXPath;
 
@@ -362,6 +363,9 @@ public class BlockingMsgSender {
         }
         // Fill Client options
         BlockingMsgSenderUtils.fillClientOptions(endpointDefinition, clientOptions, synapseInMsgCtx);
+
+        // Update To url if mock-service exists for unit test
+        MediatorPropertyUtils.updateSendToUrlForMockServices(endpointDefinition, synapseInMsgCtx, axisOutMsgCtx);
 
         anonymousService.getParent().addParameter(SynapseConstants.HIDDEN_SERVICE_PARAM, "true");
         ServiceGroupContext serviceGroupContext =
