@@ -24,7 +24,7 @@
    </parent>
    <groupId>org.apache.synapse</groupId>
    <artifactId>Apache-Synapse</artifactId>
-   <version>2.1.7-wso2v227.4-SNAPSHOT</version>
+   <version>2.1.7-wso2v227.4</version>
    <name>Apache Synapse</name>
    <description>Apache Synapse</description>
    <packaging>pom</packaging>
@@ -68,7 +68,7 @@
       <developerConnection>scm:git:https://github.com/wso2-support/wso2-synapse</developerConnection>
       <url>https://github.com/wso2-support/wso2-synapse</url>
       
-     <tag>HEAD</tag>
+     <tag>v2.1.7-wso2v227.4</tag>
   </scm>
    <organization>
       <name>Apache Software Foundation</name>
