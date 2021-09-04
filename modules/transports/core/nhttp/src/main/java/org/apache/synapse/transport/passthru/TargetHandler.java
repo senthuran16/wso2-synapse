@@ -49,6 +49,7 @@ import org.apache.synapse.transport.passthru.config.PassThroughConfiguration;
 import org.apache.synapse.transport.passthru.config.TargetConfiguration;
 import org.apache.synapse.transport.passthru.connections.HostConnections;
 import org.apache.synapse.transport.passthru.jmx.PassThroughTransportMetricsCollector;
+import org.apache.synapse.transport.passthru.util.RelayUtils;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -394,6 +395,8 @@ public class TargetHandler implements NHttpClientEventHandler {
             }
             if (connState != ProtocolState.REQUEST_DONE) {
                 isError = true;
+                MessageContext requestMsgContext = TargetContext.get(conn).getRequestMsgCtx();
+                RelayUtils.consumeAndDiscardMessage(requestMsgContext);
                 // State is not REQUEST_DONE. i.e the request is not completely written. But the response is started
                 // receiving, therefore informing a write error has occurred. So the thread which is
                 // waiting on writing the request out, will get notified.
@@ -408,7 +411,6 @@ public class TargetHandler implements NHttpClientEventHandler {
                             log.debug(conn + ": Received response with status code : " + response.getStatusLine()
                                     .getStatusCode() + " in invalid state : " + connState.name());
                         }
-                        MessageContext requestMsgContext = TargetContext.get(conn).getRequestMsgCtx();
                         if (requestMsgContext != null) {
                             NHttpServerConnection sourceConn = (NHttpServerConnection) requestMsgContext.getProperty(
                                     PassThroughConstants.PASS_THROUGH_SOURCE_CONNECTION);
