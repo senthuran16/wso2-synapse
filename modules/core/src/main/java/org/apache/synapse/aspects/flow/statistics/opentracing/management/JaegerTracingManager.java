@@ -77,7 +77,7 @@ public class JaegerTracingManager implements OpenTracingManager {
 
     /**
      * Initializes the tracer object for Zipkin.
-     *  @param sampler
+     * @param sampler ConstSampler
      * @param reporter Zipkin reporter.
      */
     private void initializeTracer(ConstSampler sampler, ZipkinV2Reporter reporter) {
