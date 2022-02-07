@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.apache.synapse</groupId>
         <artifactId>synapse-transports</artifactId>
-        <version>2.1.7-wso2v227.14</version>
+        <version>2.1.7-wso2v227.14-TELSTRAEIELASUB-hotfix-1-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -165,6 +165,6 @@
         </dependency>
     </dependencies>
 
-    <properties />
+    <properties/>
 
 </project>
