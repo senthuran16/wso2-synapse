@@ -178,6 +178,33 @@ public class TargetConnections {
     }
 
     /**
+     * Close a connection gracefully.
+     *
+     * @param conn the connection that needs to be closed.
+     * @param isError  whether an error is causing the close of the connection.
+     *                 When an error is causing a close of a connection we should
+     *                 not release the associated buffers into the pool.
+     */
+    public void closeConnection(NHttpClientConnection conn, boolean isError) {
+        HostConnections pool = (HostConnections) conn.getContext().getAttribute(
+                PassThroughConstants.CONNECTION_POOL);
+
+        TargetContext.get(conn).reset(isError);
+
+        if (pool != null) {
+            pool.forget(conn);
+        } else {
+            // we shouldn't get here
+            log.fatal("Connection without a pool. Something wrong. Need to fix.");
+        }
+
+        try {
+            conn.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    /**
      * Release an active connection to the pool
      *
      * @param conn connection to be released
