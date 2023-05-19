@@ -143,15 +143,21 @@ public class TimeoutHandler extends TimerTask {
                         }
                         if (!"true".equals(callback.getSynapseOutMsgCtx().getProperty(SynapseConstants.OUT_ONLY))) {
                             org.apache.axis2.context.MessageContext axis2MessageContext = callback.getAxis2OutMsgCtx();
-                            ContextAwareLogger.getLogger(axis2MessageContext, log, true)
-                                    .warn("Expiring message ID : " + key + "; dropping message after "
-                                            + callback.getTimeoutType().toString() + " of : "
-                                            + (callback.getTimeoutDuration() / 1000) + " seconds for "
-                                            + getEndpointLogMessage(callback.getSynapseOutMsgCtx(),
-                                            callback.getAxis2OutMsgCtx()) + ", "
-                                            + getServiceLogMessage(callback.getSynapseOutMsgCtx())
-                                            + "Correlation ID : " + callback.getAxis2OutMsgCtx().getProperty(
-                                            CorrelationConstants.CORRELATION_ID));
+                            String timeoutWarnLog = "Expiring message ID : " + key + "; dropping message after "
+                                    + callback.getTimeoutType().toString() + " of : "
+                                    + (callback.getTimeoutDuration() / 1000) + " seconds for "
+                                    + getEndpointLogMessage(callback.getSynapseOutMsgCtx(),
+                                    callback.getAxis2OutMsgCtx()) + ", "
+                                    + getServiceLogMessage(callback.getSynapseOutMsgCtx())
+                                    + "Correlation ID : " + callback.getAxis2OutMsgCtx().getProperty(
+                                    CorrelationConstants.CORRELATION_ID);
+                            if (conf.isCloseSocketOnEndpointTimeout()) {
+                                ContextAwareLogger.getLogger(axis2MessageContext, log, true)
+                                        .warn(timeoutWarnLog + ", Closing the Target Connection");
+                            } else {
+                                ContextAwareLogger.getLogger(axis2MessageContext, log, true)
+                                        .warn(timeoutWarnLog);
+                            }
                         }
 
                         if (callback.getTimeOutAction() != SynapseConstants.NONE) {
