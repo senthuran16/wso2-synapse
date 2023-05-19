@@ -135,4 +135,9 @@ public interface PassThroughConfigPNames {
      * Defines whether viewing services are enabled or not
      */
     public String BLOCK_SERVICE_LIST = "http.block_service_list";
+
+    /**
+     * Defines max waiting time for a request to be queued for a worker thread
+     */
+    public String EXPECTED_MAX_QUEUEING_TIME = "expected_max_queueing_time";
 }

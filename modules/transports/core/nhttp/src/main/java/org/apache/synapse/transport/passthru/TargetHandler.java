@@ -21,6 +21,7 @@ import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.description.WSDL2Constants;
 import org.apache.axis2.engine.MessageReceiver;
 import org.apache.axis2.transport.base.MetricsCollector;
+import org.apache.axis2.transport.base.threads.WorkerPool;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.ConnectionClosedException;
@@ -515,9 +516,13 @@ public class TargetHandler implements NHttpClientEventHandler {
                 return;
             }
 
-            targetConfiguration.getWorkerPool().execute(
-                    new ClientWorker(targetConfiguration, requestMsgContext, targetResponse,
-                                     allowedResponseProperties));
+            WorkerPool workerPool = targetConfiguration.getWorkerPool();
+            workerPool.execute(
+                    new ClientWorker(targetConfiguration, requestMsgContext, targetResponse));
+            if (workerPool.getActiveCount() >= conf.getWorkerPoolCoreSize()) {
+                conn.getContext().setAttribute(PassThroughConstants.CLIENT_WORKER_SIDE_QUEUED_TIME,
+                        System.currentTimeMillis());
+            }
 
             targetConfiguration.getMetrics().incrementMessagesReceived();
 
@@ -871,6 +876,12 @@ public class TargetHandler implements NHttpClientEventHandler {
 
         if (log.isDebugEnabled()) {
             log.debug(getErrorMessage("Connection timeout", conn) + " "+ getConnectionLoggingInfo(conn));
+        }
+        if (!PassThroughConstants.THREAD_STATUS_RUNNING.equals(conn.getContext().getAttribute
+                (PassThroughConstants.CLIENT_WORKER_THREAD_STATUS))) {
+            log.warn("Target Handler Socket Timeout occurred while the worker pool exhausted, " +
+                    "INTERNAL_STATE = " + state + ", CORRELATION_ID = "
+                    + conn.getContext().getAttribute(CorrelationConstants.CORRELATION_ID));
         }
 
         if (state != null &&

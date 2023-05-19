@@ -166,6 +166,16 @@ public class PassThroughConstants {
     public static final String CLIENT_WORKER_INIT_TIME = "CLIENT_WORKER_INIT_TIME";
     public static final String CLIENT_WORKER_START_TIME = "CLIENT_WORKER_START_TIME";
 
+    public static final String SERVER_WORKER_THREAD_STATUS = "SERVER_WORKER_THREAD_STATUS";
+
+    public static final String CLIENT_WORKER_THREAD_STATUS = "CLIENT_WORKER_THREAD_STATUS";
+
+    public static final String SERVER_WORKER_SIDE_QUEUED_TIME = "SERVER_WORKER_SIDE_QUEUED_TIME";
+
+    public static final String CLIENT_WORKER_SIDE_QUEUED_TIME = "CLIENT_WORKER_SIDE_QUEUED_TIME";
+
+    public static final String THREAD_STATUS_RUNNING = "RUNNING";
+
     public static final String SYNAPSE_PASSTHROUGH_LATENCY_ADVANCE_VIEW = "synapse.passthrough.latency_view.enable_advanced_view";
     public static final String SYNAPSE_PASSTHROUGH_S2SLATENCY_ADVANCE_VIEW = "synapse.passthrough.s2slatency_view.enable_advanced_view";
     public static final String PASSTHROUGH_LATENCY_VIEW = "PassthroughLatencyView";
