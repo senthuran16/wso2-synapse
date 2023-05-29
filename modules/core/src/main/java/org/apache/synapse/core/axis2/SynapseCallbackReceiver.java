@@ -220,7 +220,6 @@ public class SynapseCallbackReceiver extends CallbackReceiver {
             } else {
                 // TODO invoke a generic synapse error handler for this message
                 handleNoCallback(messageID, messageCtx);
-                messageCtx.removeProperty(PassThroughConstants.INTERNAL_EXCEPTION_ORIGIN);
             }
 
         } else if (!messageCtx.isPropertyTrue(NhttpConstants.SC_ACCEPTED)){

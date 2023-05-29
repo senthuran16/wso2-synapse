@@ -41,6 +41,8 @@ public class PassThroughConfiguration {
      * Default tuning parameter values
      */
     private static final int DEFAULT_WORKER_POOL_SIZE_CORE       = 40;
+    private static final boolean DEFAULT_CONSUME_AND_DISCARD        = true;
+    private static final boolean CLOSE_SOCKET_ON_ENDPOINT_TIMEOUT = false;
     private static final int DEFAULT_WORKER_POOL_SIZE_MAX        = 200;
     private static final int DEFAULT_WORKER_THREAD_KEEPALIVE_SEC = 60;
     private static final int DEFAULT_WORKER_POOL_QUEUE_LENGTH    = -1;
@@ -50,8 +52,8 @@ public class PassThroughConfiguration {
     private static final int DEFAULT_MAX_ACTIVE_CON = -1;
     private static final int DEFAULT_LISTENER_SHUTDOWN_WAIT_TIME = 0;
     private static final int DEFAULT_CONNECTION_GRACE_TIME = 10000;
+    private static final String EXPECTED_MAX_QUEUEING_TIME_DEFAULT = "30000";
     private Boolean isKeepAliveDisabled = null;
-
     private Boolean isConsumeAndDiscard = true;
 
     //additional rest dispatch handlers
@@ -128,6 +130,11 @@ public class PassThroughConfiguration {
                     ConfigurationBuilderUtil.getBooleanProperty(PassThroughConfigPNames.CONSUME_AND_DISCARD,
                             true, props);
         return isConsumeAndDiscard;
+    }
+
+    public boolean isCloseSocketOnEndpointTimeout() {
+        return getBooleanProperty(PassThroughConfigPNames.CLOSE_SOCKET_ON_ENDPOINT_TIMEOUT
+                , CLOSE_SOCKET_ON_ENDPOINT_TIMEOUT);
     }
 
     public int getMaxActiveConnections() {
@@ -211,6 +218,20 @@ public class PassThroughConfiguration {
     public String getCorrelationHeaderName() {
         return ConfigurationBuilderUtil.getStringProperty(PassThroughConfigPNames.CORRELATION_HEADER_NAME_PROPERTY,
                 PassThroughConstants.CORRELATION_DEFAULT_HEADER, props);
+    }
+
+    public Long getExpectedMaxQueueingTime() {
+        String expectedMaxQueuingTime = getStringProperty(PassThroughConfigPNames.EXPECTED_MAX_QUEUEING_TIME,
+                EXPECTED_MAX_QUEUEING_TIME_DEFAULT);
+        Long convertedExpectedMaxQueuingTime;
+        try {
+            convertedExpectedMaxQueuingTime = Long.parseLong(expectedMaxQueuingTime);
+        } catch (NumberFormatException exception) {
+            log.warn("Invalid value for the expected max queuing time. Expected max queuing time should be a long value. " +
+                    "Using the default value " + EXPECTED_MAX_QUEUEING_TIME_DEFAULT);
+            convertedExpectedMaxQueuingTime = Long.parseLong(EXPECTED_MAX_QUEUEING_TIME_DEFAULT);
+        }
+        return convertedExpectedMaxQueuingTime;
     }
 
     /**
