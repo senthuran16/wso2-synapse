@@ -137,6 +137,7 @@ public class PollTableEntry extends AbstractPollTableEntry {
      * At usage default id 'false' which lead hostname resolution at deployment
      */
     private boolean resolveHostsDynamically = false;
+    private boolean fileNotFoundLogged = false;
 
     private ParameterInclude params;
 
@@ -448,6 +449,26 @@ public class PollTableEntry extends AbstractPollTableEntry {
 
     public ParameterInclude getParams() {
         return params;
+    }
+
+    /**
+     * Checks if the file not found warning has been logged.
+     *
+     * @return {@code true} if the file not found warning has been logged,
+     * {@code false} otherwise.
+     */
+    public boolean isFileNotFoundLogged() {
+        return fileNotFoundLogged;
+    }
+
+    /**
+     * Sets the file not found logged flag.
+     *
+     * @param fileNotFoundLogged {@code true} to indicate that the file not found warning has been logged,
+     * {@code false} otherwise.
+     */
+    public void setFileNotFoundLogged(boolean fileNotFoundLogged) {
+        this.fileNotFoundLogged = fileNotFoundLogged;
     }
     
     /**
