@@ -857,8 +857,8 @@ public class SourceHandler implements NHttpServerEventHandler {
             SourceContext.updateState(conn, ProtocolState.CLOSED);
             sourceConfiguration.getSourceConnections().shutDownConnection(conn, true);
         } else if (ex instanceof MethodNotSupportedException) {
-            isFault = generateHTTPErrorResponse(conn, ex, HttpVersion.HTTP_1_1, HttpStatus.SC_METHOD_NOT_ALLOWED,
-                    "Method not allowed");
+            isFault = generateHTTPErrorResponse(conn, ex, HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_IMPLEMENTED,
+                    "Not Implemented");
         } else if (ex instanceof HttpException) {
             isFault = generateHTTPErrorResponse(conn, ex, HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST,
                     "Bad request");
