@@ -35,6 +35,9 @@ public class ThrottleProperties implements Serializable {
 	private String throttlingKeysToReplicates = "25000";
 	private Map<String, String> distributedCounterConfigurations = new HashMap<>();
 	private String distributedCounterType = ThrottleConstants.HAZELCAST;
+	private boolean throttleSyncAsyncHybridModeEnabled = false;
+	private String distributedThrottleProcessorType = "hybrid";
+
 	public String getWindowReplicatorPoolSize() {
 		return windowReplicatorPoolSize;
 	}
@@ -155,4 +158,23 @@ public class ThrottleProperties implements Serializable {
 
 		this.distributedCounterType = distributedCounterType;
 	}
+
+	public String getDistributedThrottleProcessorType() {
+
+		return distributedThrottleProcessorType;
+	}
+
+	public void setDistributedThrottleProcessorType(String distributedThrottleProcessorType) {
+
+		this.distributedThrottleProcessorType = distributedThrottleProcessorType;
+	}
+
+	public void setThrottleSyncAsyncHybridModeEnabled(boolean throttleSyncAsyncHybridModeEnabled) {
+		this.throttleSyncAsyncHybridModeEnabled = throttleSyncAsyncHybridModeEnabled;
+	}
+
+	public boolean isThrottleSyncAsyncHybridModeEnabled() {
+		return throttleSyncAsyncHybridModeEnabled;
+	}
+
 }

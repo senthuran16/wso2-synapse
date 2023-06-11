@@ -224,6 +224,7 @@ public class SharedParamManager {
 
 
 
+
 	public static void setExpiryTime(String id, long expiryTimeStamp) {
 		if(log.isDebugEnabled()) {
 			log.debug("SETTING Expiry WITH ID " + id);
@@ -234,11 +235,37 @@ public class SharedParamManager {
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+			log.info("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
 			distributedCounterManager.setExpiry(sharedCounterKey, expiryTimeStamp);
+			log.info("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
 			distributedCounterManager.setExpiry(sharedTimeStampKey, expiryTimeStamp);
 
 		}
 
+	}
+
+//	public static long getExpiryTime(String id) {
+//		if (log.isDebugEnabled()) {
+//			log.debug("GETTING EXPIRY TIME WITH ID " + id);
+//		}
+//
+//		DistributedCounterManager distributedCounterManager =
+//				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+//		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+//			return distributedCounterManager.getExpiry(id);
+//		} else {
+//			return 0;
+//		}
+//	}
+	public static long getTtl(String key) {
+		long ttl = 0;
+		DistributedCounterManager distributedCounterManager =
+				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+			ttl = distributedCounterManager.getTtl(key);
+		}
+
+		return ttl;
 	}
 
 }

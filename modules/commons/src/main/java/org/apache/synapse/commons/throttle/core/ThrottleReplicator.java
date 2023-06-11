@@ -30,6 +30,7 @@ import java.util.concurrent.*;
  * Frequency of the job can be controlled
  */
 
+// Redis to GW sync
 public class ThrottleReplicator {
     private static final Log log = LogFactory.getLog(ThrottleReplicator.class);
     private static final int MAX_KEYS_TO_REPLICATE = 1000;
@@ -64,6 +65,7 @@ public class ThrottleReplicator {
             keysToReplicate = Integer.parseInt(throttleProperties.getThrottlingKeysToReplicates());
         log.debug("Max keys to Replicate " + keysToReplicate);
         for (int i = 0; i < replicatorPoolSize; i++) {
+            log.info("### Scheduling ThrottleReplicator to the executor service.");
             executor.scheduleAtFixedRate(new ReplicatorTask(), Integer.parseInt(throttleFrequency),
                     Integer.parseInt(throttleFrequency), TimeUnit.MILLISECONDS);
         }
@@ -90,6 +92,9 @@ public class ThrottleReplicator {
     private class ReplicatorTask implements Runnable {
         public void run() {
             log.debug("Start running ThrottleReplicatorTask.");
+            if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled()) {
+                return;
+            }
             try {
                 if (!set.isEmpty()) {
                     for (String key : set) {
@@ -100,6 +105,13 @@ public class ThrottleReplicator {
                             //get distributed map instance and update counters
                             //If both global and local counters are 0 then that means cleanup caller
                             if (callerContext != null) {
+                                if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled() &&
+                                        callerContext.isThrottleParamSyncingModeSync()) {
+                                    log.info("FEATURE CODE !!!");
+                                    set.remove(key); // check the requirement
+                                    continue;
+                                }
+                                // can use callerContext.throttleCounterParamSync();
                                 //If local counter > 0 and time window is not expired then only we have to replicate counters.
                                 //Otherwise we do not need to do replication.
                                 if (callerContext.getLocalCounter() > 0 &&
@@ -110,6 +122,7 @@ public class ThrottleReplicator {
 	                                //if that happen, reset will cause to miss the additional requests come after
 	                                //local counter value taken into the consideration
 	                                long localCounter = callerContext.getLocalCounter();
+                                    log.info(">>> Local counter first:" + localCounter);
 	                                callerContext.resetLocalCounter();
 	                                Long distributedCounter = SharedParamManager.asyncGetAndAddDistributedCounter(id, localCounter);
 	                                //Update instance global counter with distributed counter
@@ -117,11 +130,16 @@ public class ThrottleReplicator {
                                     if(log.isDebugEnabled()) {
                                         log.debug("Increasing counters of context :" + callerContext.getId() + " "
                                                   + "Replicated Count After  Update : distributedCounter =" +distributedCounter
-                                                  + " localCounter=" + localCounter + " total=" + (distributedCounter + localCounter));
+                                                  + " localCounter=" + localCounter + " total=" + (distributedCounter + localCounter) + " globalCounter="
+                                                  + callerContext.getGlobalCounter());
                                     }
+                                    log.info(">>> Local counter now:" + callerContext.getLocalCounter());
+
                                 }
                             }
-	                        set.remove(key);
+                            log.info("$$$TR after evaluating:: localHits :" + callerContext.getLocalHits() + " ### localCount :" + callerContext.getLocalCounter() + " ### globalCount :" + callerContext.getGlobalCounter());
+
+                            set.remove(key);
                         }
 
                     }

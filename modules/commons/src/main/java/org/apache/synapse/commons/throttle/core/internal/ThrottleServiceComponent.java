@@ -69,4 +69,23 @@ public class ThrottleServiceComponent {
 	protected void removeDistributedCounterManagerInstance(DistributedCounterManager distributedCounterManager) {
 		ThrottleServiceDataHolder.getInstance().removeDistributedCounterManager(distributedCounterManager);
 	}
+
+	/**
+	 *
+	 * @param
+	 */
+	@Reference(
+			name = "distributedThrottleProcessor.instance.service",
+			service = DistributedThrottleProcessor.class,
+			cardinality = ReferenceCardinality.MULTIPLE,
+			policy = ReferencePolicy.DYNAMIC,
+			unbind = "removeDistributedThrottleProcessorInstance"
+	)
+	protected void addDistributedThrottleProcessorInstance(DistributedThrottleProcessor distributedThrottleProcessor) {
+		ThrottleServiceDataHolder.getInstance().addDistributedThrottleProcessor(distributedThrottleProcessor);
+	}
+
+	protected void removeDistributedThrottleProcessorInstance(DistributedThrottleProcessor distributedThrottleProcessor) {
+		ThrottleServiceDataHolder.getInstance().removeDistributedThrottleProcessor(distributedThrottleProcessor);
+	}
 }

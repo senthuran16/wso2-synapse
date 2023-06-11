@@ -160,6 +160,13 @@ public class ThrottleUtil {
 									getResolvedValue(secretResolver, distributedConfiguration));
 						}
 					}
+					if (key.contains(ThrottleConstants.THROTTLE_SYNC_ASYNC_HYBRID_MODE_ENABLED)) {
+						String throttleSyncAsyncHybridModeEnabled = properties.getProperty(key);
+						if (StringUtils.isNotEmpty(throttleSyncAsyncHybridModeEnabled)) {
+							throttleProperties.setThrottleSyncAsyncHybridModeEnabled(
+									Boolean.parseBoolean(throttleSyncAsyncHybridModeEnabled));
+						}
+					}
 				}
 			} catch (IOException e) {
 				log.debug("Setting the Default Throttle Properties");

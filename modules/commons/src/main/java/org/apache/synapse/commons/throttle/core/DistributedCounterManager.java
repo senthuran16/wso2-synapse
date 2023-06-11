@@ -63,6 +63,8 @@ public interface DistributedCounterManager {
      */
     public long asyncGetAndAddCounter(String key, long value);
 
+    public long asyncAddCounter(String key, long value);
+
     /**
      * This method used to alter the DistributedCounter.
      *
@@ -100,4 +102,8 @@ public interface DistributedCounterManager {
     public String getType();
 
     void setExpiry(String key, long expiryTimeStamp);
+
+//    public long getExpiry(String key);
+
+    public long getTtl(String key);
 }

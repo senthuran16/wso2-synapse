@@ -186,5 +186,5 @@ public final class ThrottleConstants {
     public static final String WINDOW_REPLICATOR_FREQUENCY = "throttlingWindowReplicator.replication.frequency";
     public static final String DISTRIBUTED_COUNTER_TYPE = "throttling.distributed.counter.type";
     public static final String DISTRIBUTED_COUNTER_CONFIGURATIONS  = "throttling.distributed.counter.configurations.";
-
+    public static final String THROTTLE_SYNC_ASYNC_HYBRID_MODE_ENABLED = "throttling.sync-async_hybrid_mode.enable";
 }

@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  * Frequency of the job can be controlled
  */
 
+// ThrottleWindowReplicator runs before ThrottleReplicator
 public class ThrottleWindowReplicator {
 
 	private static final Log log = LogFactory.getLog(ThrottleWindowReplicator.class);
@@ -70,6 +71,7 @@ private ThrottleProperties throttleProperties;
 		}
 
 		for (int i = 0; i < replicatorPoolSize; i++) {
+			log.info("### Scheduling ThrottleWindowReplicatorTask to the executor service.");
 			executor.scheduleAtFixedRate(new ReplicatorTask(), Integer.parseInt(windowReplicationFrequency),
 					Integer.parseInt(windowReplicationFrequency), TimeUnit.MILLISECONDS);
 		}
@@ -98,6 +100,9 @@ private ThrottleProperties throttleProperties;
 		public void run() {
 			try {
 				log.debug("Start running ThrottleWindowReplicatorTask.");
+				if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled()) { // TODO: move this to thread start level
+						return;
+				}
 				if (!set.isEmpty()) {
 					for (String key : set) {
 						String callerId;
@@ -107,6 +112,13 @@ private ThrottleProperties throttleProperties;
 									configContext.getProperty(ThrottleConstants.THROTTLE_INFO_KEY);
 							CallerContext callerContext = dataHolder.getCallerContext(key);
 							if (callerContext != null) {
+								if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled()) {
+									log.info("FEATURE CODE !!!");
+									if (callerContext.isThrottleParamSyncingModeSync()) {
+										set.remove(key); // check the requirement
+										continue;
+									}
+								}
 								callerId = callerContext.getId();
 								long sharedTimestamp = SharedParamManager.getSharedTimestamp(callerContext.getId());
 								long sharedNextWindow = sharedTimestamp + callerContext.getUnitTime();
@@ -114,11 +126,15 @@ private ThrottleProperties throttleProperties;
 								//First if statement check whether local first access time is lower than the current
 								// global counter if so it will adjust the local first access time to global time to
 								// adjust the time window
-								if (localFirstAccessTime < sharedTimestamp) {
+
+								log.info("INITIAL ** sharedTimestamp :" + sharedTimestamp + "sharedNextWindow :" + sharedNextWindow + "localFirstAccessTime :" + localFirstAccessTime);
+
+								if (localFirstAccessTime < sharedTimestamp) {  // TODO:  this condition needs review
+									log.debug("Hit if *****");
 									callerContext.setFirstAccessTime(sharedTimestamp);
 									callerContext.setNextTimeWindow(sharedNextWindow);
 									callerContext.setGlobalCounter(SharedParamManager.getDistributedCounter(callerId));
-									if(log.isDebugEnabled()) {
+									if (log.isDebugEnabled()) {
 										log.debug("Setting time windows of caller context when window already set=" + callerId);
 									}
 									//If some request comes to a nodes after some node set the shared timestamp then this
@@ -126,6 +142,8 @@ private ThrottleProperties throttleProperties;
 									// if so this will set local caller context time window to global
 								} else if (localFirstAccessTime > sharedTimestamp
 								           && localFirstAccessTime < sharedNextWindow) {
+									log.debug("Hit ELSE-IF****");
+
 									callerContext.setFirstAccessTime(sharedTimestamp);
 									callerContext.setNextTimeWindow(sharedNextWindow);
 									callerContext.setGlobalCounter(SharedParamManager.getDistributedCounter(callerId));
@@ -138,6 +156,7 @@ private ThrottleProperties throttleProperties;
 									// window so present node will set shared timestamp and the distributed counter. Also if time
 									// window expired this will be the node who set the next time window starting time
 								} else {
+									log.debug("Hit Else****");
 									SharedParamManager.setSharedTimestamp(callerId, localFirstAccessTime);
 									SharedParamManager.setDistributedCounter(callerId, 0);
 									SharedParamManager.setExpiryTime(callerId,
@@ -150,7 +169,10 @@ private ThrottleProperties throttleProperties;
 										log.debug("Complete resetting time window of=" + callerId);
 									}
 								}
+								log.info("$$$TWR after evaluating:: localHits :" + callerContext.getLocalHits() + " ### localCount :" + callerContext.getLocalCounter() + " ### globalCount :" + callerContext.getGlobalCounter());
+
 							}
+
 							set.remove(key);
 						}
 
