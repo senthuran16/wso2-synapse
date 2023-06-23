@@ -1,20 +1,20 @@
 /*
-*  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.apache.synapse.commons.throttle.core;
 
@@ -34,13 +34,12 @@ import java.util.concurrent.TimeUnit;
  * Frequency of the job can be controlled
  */
 
-// ThrottleWindowReplicator runs before ThrottleReplicator
 public class ThrottleWindowReplicator {
 
 	private static final Log log = LogFactory.getLog(ThrottleWindowReplicator.class);
 	private static int replicatorPoolSize ;
 	private ConfigurationContext configContext;
-private ThrottleProperties throttleProperties;
+	private ThrottleProperties throttleProperties;
 	private int replicatorCount;
 
 	private Set<String> set = new ConcurrentSkipListSet<String>();
@@ -71,7 +70,6 @@ private ThrottleProperties throttleProperties;
 		}
 
 		for (int i = 0; i < replicatorPoolSize; i++) {
-			log.info("### Scheduling ThrottleWindowReplicatorTask to the executor service.");
 			executor.scheduleAtFixedRate(new ReplicatorTask(), Integer.parseInt(windowReplicationFrequency),
 					Integer.parseInt(windowReplicationFrequency), TimeUnit.MILLISECONDS);
 		}
@@ -100,9 +98,6 @@ private ThrottleProperties throttleProperties;
 		public void run() {
 			try {
 				log.debug("Start running ThrottleWindowReplicatorTask.");
-				if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled()) { // TODO: move this to thread start level
-						return;
-				}
 				if (!set.isEmpty()) {
 					for (String key : set) {
 						String callerId;
@@ -112,13 +107,6 @@ private ThrottleProperties throttleProperties;
 									configContext.getProperty(ThrottleConstants.THROTTLE_INFO_KEY);
 							CallerContext callerContext = dataHolder.getCallerContext(key);
 							if (callerContext != null) {
-								if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled()) {
-									log.info("FEATURE CODE !!!");
-									if (callerContext.isThrottleParamSyncingModeSync()) {
-										set.remove(key); // check the requirement
-										continue;
-									}
-								}
 								callerId = callerContext.getId();
 								long sharedTimestamp = SharedParamManager.getSharedTimestamp(callerContext.getId());
 								long sharedNextWindow = sharedTimestamp + callerContext.getUnitTime();
@@ -126,37 +114,30 @@ private ThrottleProperties throttleProperties;
 								//First if statement check whether local first access time is lower than the current
 								// global counter if so it will adjust the local first access time to global time to
 								// adjust the time window
-
-								log.info("INITIAL ** sharedTimestamp :" + sharedTimestamp + "sharedNextWindow :" + sharedNextWindow + "localFirstAccessTime :" + localFirstAccessTime);
-
-								if (localFirstAccessTime < sharedTimestamp) {  // TODO:  this condition needs review
-									log.debug("Hit if *****");
+								if (localFirstAccessTime < sharedTimestamp) {
 									callerContext.setFirstAccessTime(sharedTimestamp);
 									callerContext.setNextTimeWindow(sharedNextWindow);
 									callerContext.setGlobalCounter(SharedParamManager.getDistributedCounter(callerId));
-									if (log.isDebugEnabled()) {
+									if(log.isDebugEnabled()) {
 										log.debug("Setting time windows of caller context when window already set=" + callerId);
 									}
 									//If some request comes to a nodes after some node set the shared timestamp then this
 									// check whether the first access time of local is in between the global time window
 									// if so this will set local caller context time window to global
 								} else if (localFirstAccessTime > sharedTimestamp
-								           && localFirstAccessTime < sharedNextWindow) {
-									log.debug("Hit ELSE-IF****");
-
+										&& localFirstAccessTime < sharedNextWindow) {
 									callerContext.setFirstAccessTime(sharedTimestamp);
 									callerContext.setNextTimeWindow(sharedNextWindow);
 									callerContext.setGlobalCounter(SharedParamManager.getDistributedCounter(callerId));
 									if (log.isDebugEnabled()) {
 										log.debug("Setting time windows of caller context in intermediate interval=" +
-										         callerId);
+												callerId);
 									}
 									//If above two statements not meets, this is the place where node set new window if
 									// global first access time is 0, then it will be the beginning of the throttle time time
 									// window so present node will set shared timestamp and the distributed counter. Also if time
 									// window expired this will be the node who set the next time window starting time
 								} else {
-									log.debug("Hit Else****");
 									SharedParamManager.setSharedTimestamp(callerId, localFirstAccessTime);
 									SharedParamManager.setDistributedCounter(callerId, 0);
 									SharedParamManager.setExpiryTime(callerId,
@@ -169,10 +150,7 @@ private ThrottleProperties throttleProperties;
 										log.debug("Complete resetting time window of=" + callerId);
 									}
 								}
-								log.info("$$$TWR after evaluating:: localHits :" + callerContext.getLocalHits() + " ### localCount :" + callerContext.getLocalCounter() + " ### globalCount :" + callerContext.getGlobalCounter());
-
 							}
-
 							set.remove(key);
 						}
 

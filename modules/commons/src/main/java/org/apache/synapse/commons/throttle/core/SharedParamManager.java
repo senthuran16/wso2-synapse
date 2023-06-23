@@ -235,9 +235,9 @@ public class SharedParamManager {
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
-			log.info("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
+			log.debug("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
 			distributedCounterManager.setExpiry(sharedCounterKey, expiryTimeStamp);
-			log.info("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
+			log.debug("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
 			distributedCounterManager.setExpiry(sharedTimeStampKey, expiryTimeStamp);
 
 		}
