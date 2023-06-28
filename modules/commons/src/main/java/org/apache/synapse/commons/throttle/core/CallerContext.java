@@ -24,6 +24,9 @@ import org.apache.synapse.commons.throttle.core.internal.DistributedThrottleProc
 import org.apache.synapse.commons.throttle.core.internal.ThrottleServiceDataHolder;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -126,7 +129,10 @@ public abstract class CallerContext implements Serializable, Cloneable {
         this.roleId = configuration.getID();
         //Also we need to pick counter value associated with time window.
         throttleContext.addCallerContext(this, this.id);
-        throttleContext.replicateTimeWindow(this.id);
+
+        if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+            throttleContext.replicateTimeWindow(this.id);
+        }
     }
 
     /**
@@ -560,8 +566,10 @@ public abstract class CallerContext implements Serializable, Cloneable {
             initAccess(configuration, throttleContext, currentTime); // sets firstAccessTime, nextTimeWindow
         }
         // if unit time period (session time) is not over
-        log.info("\n\n ### NEW REQUEST RECEIVED !");
-        log.info("### Before evaluating:: localHits :" + localHits.get() + " ### localCount :" + localCount.get() + " ### globalCount :" + globalCount.get() + " MaxLimit:" + configuration.getMaximumRequestPerUnitTime());
+        log.info("\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime + " (" + getReadableTime(currentTime) + ") " );
+        log.info("### Before evaluating:: localHits :" + localHits.get() + " ### localCount :" + localCount.get()
+                + " ### globalCount :" + globalCount.get() + " MaxLimit:" + configuration.getMaximumRequestPerUnitTime()
+                + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 
         DistributedThrottleProcessor distributedThrottleProcessor =
                 ThrottleServiceDataHolder.getInstance().getDistributedThrottleProcessor();
@@ -588,6 +596,14 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
         return canAccess;
 
+    }
+
+    // TODO: may remove or move this method to some util class
+    public String getReadableTime(long time) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
+        Date date = new Date(time);
+        String formattedTime = dateFormat.format(date);
+        return formattedTime;
     }
 
     private boolean canAccessBasedOnUnitTime(CallerConfiguration configuration, ThrottleContext throttleContext, long currentTime) {

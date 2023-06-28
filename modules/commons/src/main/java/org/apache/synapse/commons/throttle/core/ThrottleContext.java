@@ -22,6 +22,7 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.commons.throttle.core.factory.ThrottleContextFactory;
+import org.apache.synapse.commons.throttle.core.internal.ThrottleServiceDataHolder;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -336,7 +337,9 @@ public abstract class ThrottleContext {
     public void addAndFlushCallerContext(CallerContext callerContext, String id) {
         if (callerContext != null && id != null) {
             addCaller(callerContext, id);
-            replicateCaller(id);
+            if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+                replicateCaller(id);
+            }
         }
     }
 
@@ -350,7 +353,9 @@ public abstract class ThrottleContext {
         if (dataHolder != null && callerContext != null && id != null) {
             dataHolder.addCallerContext(id, callerContext); // have to do, because we always get
             //  any property as non-replicable
-            replicateCaller(id);
+            if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+                replicateCaller(id);
+            }
         }
     }
 
@@ -365,7 +370,9 @@ public abstract class ThrottleContext {
                 log.debug("REMOVING AND FLUSHING CALLER CONTEXT WITH ID " + id);
             }
             removeCaller(id);
-            replicateCaller(id);
+            if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+                replicateCaller(id);
+            }
         }
     }
 

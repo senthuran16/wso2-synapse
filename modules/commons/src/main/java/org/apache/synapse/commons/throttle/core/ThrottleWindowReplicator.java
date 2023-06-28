@@ -103,6 +103,7 @@ public class ThrottleWindowReplicator {
 						String callerId;
 						long localFirstAccessTime;
 						synchronized (key.intern()) {
+							log.debug("Running ThrottleWindowReplicatorTask for key :" + key);
 							ThrottleDataHolder dataHolder = (ThrottleDataHolder)
 									configContext.getProperty(ThrottleConstants.THROTTLE_INFO_KEY);
 							CallerContext callerContext = dataHolder.getCallerContext(key);

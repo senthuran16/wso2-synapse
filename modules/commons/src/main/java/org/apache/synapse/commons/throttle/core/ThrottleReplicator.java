@@ -94,6 +94,7 @@ public class ThrottleReplicator {
                 if (!set.isEmpty()) {
                     for (String key : set) {
                         synchronized (key.intern()) {
+                            log.debug("Running ThrottleReplicatorTask for key : " + key);
                             ThrottleDataHolder dataHolder = (ThrottleDataHolder)
                                     configContext.getProperty(ThrottleConstants.THROTTLE_INFO_KEY);
                             CallerContext callerContext = dataHolder.getCallerContext(key);

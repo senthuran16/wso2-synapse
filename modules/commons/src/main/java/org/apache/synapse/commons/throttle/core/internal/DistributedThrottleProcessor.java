@@ -12,7 +12,7 @@ public interface DistributedThrottleProcessor {
 
     public boolean canAccessIfUnitTimeOver(CallerContext callerContext, CallerConfiguration configuration, ThrottleContext throttleContext, long currentTime);
 
-    public void syncThrottleCounterParams(CallerContext callerContext, boolean incrementLocalCounter);
+    public void syncThrottleCounterParams(CallerContext callerContext, boolean incrementLocalCounter, long currentTime);
 
     public void syncThrottleWindowParams(CallerContext callerContext);
 
