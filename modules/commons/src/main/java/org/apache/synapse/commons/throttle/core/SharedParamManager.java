@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SharedParamManager {
 
-	private static Map<String, Long> counters= new ConcurrentHashMap<String, Long>();//Locally managed counters map for non clustered environment
+	private static Map<String, Long> counters = new ConcurrentHashMap<String, Long>();//Locally managed counters map for non clustered environment
 	private static Map<String, Long> timestamps = new ConcurrentHashMap<String, Long>();//Locally managed time stamps map for non clustered environment
 	private static Log log = LogFactory.getLog(SharedParamManager.class.getName());
 
@@ -21,7 +21,7 @@ public class SharedParamManager {
 	 * @return shared hazelcast current shared counter
 	 */
 	public static long getDistributedCounter(String id) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("GET TIMESTAMP WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
@@ -44,18 +44,18 @@ public class SharedParamManager {
 	 * Set distribute counter of caller context of given id to the provided value. If it's not distributed do the same for
 	 * local counter
 	 *
-	 * @param id of the caller context
+	 * @param id    of the caller context
 	 * @param value to set to the global counter
 	 */
 	public static void setDistributedCounter(String id, long value) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("SETTING COUNTER WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
-			distributedCounterManager.setCounter(id,value);
+			distributedCounterManager.setCounter(id, value);
 		} else {
 			counters.put(id, value);
 		}
@@ -65,7 +65,7 @@ public class SharedParamManager {
 	 * Add given value to the distribute counter of caller context of given id. If it's not
 	 * distributed return local counter
 	 *
-	 * @param id of the caller context
+	 * @param id    of the caller context
 	 * @param value to set to the global counter
 	 */
 	public static long addAndGetDistributedCounter(String id, long value) {
@@ -87,11 +87,11 @@ public class SharedParamManager {
 	 * Asynchronously add given value to the distribute counter of caller context of given id. If it's not
 	 * distributed return local counter. This will return global value before add the provided counter
 	 *
-	 * @param id of the caller context
+	 * @param id    of the caller context
 	 * @param value to set to the global counter
 	 */
 	public static long asyncGetAndAddDistributedCounter(String id, long value) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("ASYNC CREATING AND SETTING COUNTER WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
@@ -101,7 +101,7 @@ public class SharedParamManager {
 			return distributedCounterManager.asyncGetAndAddCounter(id, value);
 		} else {
 			Long currentCount = counters.get(id);
-			if(currentCount == null) {
+			if (currentCount == null) {
 				currentCount = 0L;
 			}
 			long updatedCount = currentCount + value;
@@ -114,7 +114,7 @@ public class SharedParamManager {
 	 * Asynchronously add given value to the distribute counter of caller context of given id. If it's not
 	 * distributed return local counter. This will return global value before add the provided counter
 	 *
-	 * @param id of the caller context
+	 * @param id    of the caller context
 	 * @param value to set to the global counter
 	 */
 	public static long asyncGetAndAlterDistributedCounter(String id, long value) {
@@ -122,10 +122,10 @@ public class SharedParamManager {
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
-			return distributedCounterManager.asyncGetAndAlterCounter(id,value);
+			return distributedCounterManager.asyncGetAndAlterCounter(id, value);
 		} else {
 			Long currentCount = counters.get(id);
-			if(currentCount == null) {
+			if (currentCount == null) {
 				currentCount = 0L;
 			}
 			long updatedCount = currentCount + value;
@@ -140,7 +140,7 @@ public class SharedParamManager {
 	 * @param id of the caller context
 	 */
 	public static void removeCounter(String id) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("REMOVING COUNTER WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
@@ -161,7 +161,7 @@ public class SharedParamManager {
 	 * @return shared hazelcast current shared counter
 	 */
 	public static long getSharedTimestamp(String id) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("GET TIMESTAMP WITH ID " + id);
 		}
 		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
@@ -172,7 +172,7 @@ public class SharedParamManager {
 			return distributedCounterManager.getTimestamp(key);
 		} else {
 			Long timestamp = timestamps.get(key);
-			if(timestamp != null) {
+			if (timestamp != null) {
 				return timestamp;
 			} else {
 				timestamps.put(key, 0L);
@@ -186,11 +186,11 @@ public class SharedParamManager {
 	 * Set distribute timestamp of caller context of given id to the provided value. If it's not distributed do the same for
 	 * local counter
 	 *
-	 * @param id of the caller context
+	 * @param id        of the caller context
 	 * @param timestamp to set to the global counter
 	 */
 	public static void setSharedTimestamp(String id, long timestamp) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("SETTING TIMESTAMP WITH ID" + id);
 		}
 		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
@@ -209,7 +209,7 @@ public class SharedParamManager {
 	 * @param id of the caller context
 	 */
 	public static void removeTimestamp(String id) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("REMOVING TIMESTAMP WITH ID " + id);
 		}
 		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
@@ -223,10 +223,8 @@ public class SharedParamManager {
 	}
 
 
-
-
 	public static void setExpiryTime(String id, long expiryTimeStamp) {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("SETTING Expiry WITH ID " + id);
 		}
 		String sharedCounterKey = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
@@ -244,7 +242,7 @@ public class SharedParamManager {
 
 	}
 
-//	public static long getExpiryTime(String id) {
+	//	public static long getExpiryTime(String id) {
 //		if (log.isDebugEnabled()) {
 //			log.debug("GETTING EXPIRY TIME WITH ID " + id);
 //		}
@@ -268,4 +266,57 @@ public class SharedParamManager {
 		return ttl;
 	}
 
+	/**
+	 *
+	 * @param callerContextId
+	 * @return true if lock acquired, false if lock is not acquired within the configured timeout period
+	 */
+	public static boolean lockSharedKeys(String callerContextId, String lockValue) {
+		DistributedCounterManager distributedCounterManager =
+				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+
+		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+
+			long responseCode;
+			long startTime = System.currentTimeMillis();
+			do {
+				responseCode = distributedCounterManager.setLock(callerContextId, lockValue);
+				if (responseCode == 1) {
+					// lock acquired
+					log.info("Lock acquired for key: " + callerContextId + " within " +
+					         (System.currentTimeMillis() - startTime) + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+					distributedCounterManager.setExpiry(callerContextId, System.currentTimeMillis() +
+					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
+					return true;
+				} else if (responseCode == 0) {
+					long timeElapsed = System.currentTimeMillis() - startTime;
+					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
+						log.warn("Unable to acquire lock for key: " + callerContextId + " within the configured " +
+						         "timeout period. Elapsed time: " + timeElapsed + " ms"  + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+						return false;
+					}
+
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			} while (responseCode == 0);
+		}
+
+		return true;
+	}
+
+	// no need to check the value before removal
+	public static boolean releaseSharedKeys(String callerContextId) {
+		DistributedCounterManager distributedCounterManager =
+				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+
+		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+			distributedCounterManager.removeLock(callerContextId);
+			log.info("Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+		}
+		return false;
+	}
 }
