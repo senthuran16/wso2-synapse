@@ -566,7 +566,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
             initAccess(configuration, throttleContext, currentTime); // sets firstAccessTime, nextTimeWindow
         }
         // if unit time period (session time) is not over
-        log.info("\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime + " (" + getReadableTime(currentTime) + ") " );
+        log.info("\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime + " (" + getReadableTime(currentTime) + ") " + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId() );
         log.info("### Before evaluating:: localHits :" + localHits.get() + " ### localCount :" + localCount.get()
                 + " ### globalCount :" + globalCount.get() + " MaxLimit:" + configuration.getMaximumRequestPerUnitTime()
                 + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
@@ -574,7 +574,10 @@ public abstract class CallerContext implements Serializable, Cloneable {
         DistributedThrottleProcessor distributedThrottleProcessor =
                 ThrottleServiceDataHolder.getInstance().getDistributedThrottleProcessor();
         if (distributedThrottleProcessor != null && distributedThrottleProcessor.isEnable()) {
+            long startTime = System.currentTimeMillis();
             canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext, currentTime);
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("*********** LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
         } else {
             log.info(">>>> ERROR: CALLED OLD METHOD");
             canAccess = canAccessBasedOnUnitTime(configuration, throttleContext, currentTime);
@@ -599,7 +602,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
     }
 
     // TODO: may remove or move this method to some util class
-    public String getReadableTime(long time) {
+    public static String getReadableTime(long time) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
         Date date = new Date(time);
         String formattedTime = dateFormat.format(date);
@@ -641,9 +644,9 @@ public abstract class CallerContext implements Serializable, Cloneable {
     }
 
     public void setLocalCounter(long counter) {
-        log.info(">>> changing local counter from:" + localCount.get());
+        log.info(">>> changing local counter from:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
         localCount.set(counter);
-        log.info(">>> changing local counter to:" + localCount.get());
+        log.info(">>> changing local counter to:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
     }
 
     public long getLocalCounter() {

@@ -283,21 +283,25 @@ public class SharedParamManager {
 				responseCode = distributedCounterManager.setLock(callerContextId, lockValue);
 				if (responseCode == 1) {
 					// lock acquired
-					log.info("Lock acquired for key: " + callerContextId + " within " +
-					         (System.currentTimeMillis() - startTime) + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
-					distributedCounterManager.setExpiry(callerContextId, System.currentTimeMillis() +
+					long timeNow = System.currentTimeMillis();
+					log.info("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" +
+							"Lock acquired for key: " + callerContextId + " within " +
+					         (timeNow - startTime) + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+					distributedCounterManager.setExpiry(callerContextId, timeNow +
 					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
 					return true;
 				} else if (responseCode == 0) {
-					long timeElapsed = System.currentTimeMillis() - startTime;
+					long timeNow = System.currentTimeMillis();
+					long timeElapsed = timeNow - startTime;
 					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
-						log.warn("Unable to acquire lock for key: " + callerContextId + " within the configured " +
+						log.warn("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" +"Unable to acquire lock for key: " + callerContextId + " within the configured " +
 						         "timeout period. Elapsed time: " + timeElapsed + " ms"  + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 						return false;
 					}
 
 					try {
 						Thread.sleep(5);
+						log.info("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" + "Retrying to get lock for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
@@ -315,7 +319,7 @@ public class SharedParamManager {
 
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
 			distributedCounterManager.removeLock(callerContextId);
-			log.info("Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+			log.info("current time:" + System.currentTimeMillis() + "(" + CallerContext.getReadableTime(System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 		}
 		return false;
 	}
