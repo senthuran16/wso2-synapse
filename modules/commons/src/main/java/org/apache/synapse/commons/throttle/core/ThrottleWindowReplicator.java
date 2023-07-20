@@ -97,7 +97,7 @@ public class ThrottleWindowReplicator {
 
 		public void run() {
 			try {
-				log.debug("Start running ThrottleWindowReplicatorTask.");
+				log.trace("Start running ThrottleWindowReplicatorTask.");
 				if (!set.isEmpty()) {
 					for (String key : set) {
 						String callerId;

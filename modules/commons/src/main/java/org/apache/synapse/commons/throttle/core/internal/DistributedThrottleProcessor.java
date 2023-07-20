@@ -14,7 +14,7 @@ public interface DistributedThrottleProcessor {
 
     public void syncThrottleCounterParams(CallerContext callerContext, boolean incrementLocalCounter, long currentTime);
 
-    public void syncThrottleWindowParams(CallerContext callerContext);
+    public void syncThrottleWindowParams(CallerContext callerContext, boolean isInvocationFlow);
 
     public String getType();
 

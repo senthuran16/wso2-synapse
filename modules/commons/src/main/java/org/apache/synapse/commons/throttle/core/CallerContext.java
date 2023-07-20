@@ -87,12 +87,12 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
         clone.roleId = this.roleId;
         localCount.set(0);
-        log.info(">>> Caller context clonined. " + clone.localCount);
+        log.trace(">>> Caller context clonined. " + clone.localCount);
         return clone;
     }
 
     public CallerContext(String ID) {
-        log.info("Creating Caller Context object for :" + ID);
+        log.trace("Creating Caller Context object for :" + ID);
         if (ID == null || "".equals(ID)) {
             throw new InstantiationError("Couldn't create a CallContext for an empty " +
                                          "remote caller ID");
@@ -147,17 +147,17 @@ public abstract class CallerContext implements Serializable, Cloneable {
                                                ThrottleContext throttleContext, long currentTime) {
         boolean canAccess = false;
         int maxRequest = configuration.getMaximumRequestPerUnitTime();
-       // log.info("canAccessIfUnitTimeNotOver** : currentTime now:" + currentTime); // >>>
+       // log.trace("canAccessIfUnitTimeNotOver** : currentTime now:" + currentTime); // >>>
         if (maxRequest != 0) {
-            if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-                if (isThrottleParamSyncingModeSync && this.localHits.get() >= localQuota) {
-                    log.info("### Going to run throttle param syncing in sync mode");
-                    syncThrottleWindowParams();
-                    syncThrottleCounterParams();
-                }
-            }
+//            if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+//                if (isThrottleParamSyncingModeSync && this.localHits.get() >= localQuota) {
+//                    log.trace("### Going to run throttle param syncing in sync mode");
+//                    syncThrottleWindowParams();
+//                    syncThrottleCounterParams();
+//                }
+//            }
             if ((this.globalCount.get() + this.localCount.get()) < maxRequest) {    //If the globalCount is less than max request
-                log.info("### 1,2,6-canAccessIfUnitTimeNotOver** If the globalCount is less than max request : (this.globalCount.get() + this.localCount.get()) = " + (this.globalCount.get() + this.localCount.get())); // >>>
+                log.trace("### 1,2,6-canAccessIfUnitTimeNotOver** If the globalCount is less than max request : (this.globalCount.get() + this.localCount.get()) = " + (this.globalCount.get() + this.localCount.get())); // >>>
                 if (log.isDebugEnabled()) {
                     log.debug("CallerContext Checking access if unit time is not over and less than max count>> Access "
                             + "allowed=" + maxRequest + " available="+ (maxRequest - (this.globalCount.get() + this.localCount.get()))
@@ -167,14 +167,14 @@ public abstract class CallerContext implements Serializable, Cloneable {
                 }
                 canAccess = true;     // can continue access
                 this.localCount.incrementAndGet();
-                log.info("$$$ CC_UTNO1 localCount:" + this.localCount.get());
+                log.trace("$$$ CC_UTNO1 localCount:" + this.localCount.get());
 
-                if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-                    if (isThrottleParamSyncingModeSync) {
-                        log.info("### Throttle counter syncing after allowing current request ");
-                        syncThrottleCounterParams();
-                    }
-                }
+//                if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+//                    if (isThrottleParamSyncingModeSync) {
+//                        log.trace("### Throttle counter syncing after allowing current request ");
+//                        syncThrottleCounterParams();
+//                    }
+//                }
                 throttleContext.flushCallerContext(this, id);
                 // can complete access
 
@@ -182,20 +182,20 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
                 // if first exceeding request  (nextAccessTime = 0)
                 if (this.nextAccessTime == 0) {
-                   // log.info("### 8 canAccessIfUnitTimeNotOver** if caller has not already prohibit (nextAccessTime == 0)");
+                   // log.trace("### 8 canAccessIfUnitTimeNotOver** if caller has not already prohibit (nextAccessTime == 0)");
                     //and if there is no prohibit time  period in configuration
                     long prohibitTime = configuration.getProhibitTimePeriod();
-                    log.info("C-canAccessIfUnitTimeNotOver** : prohibitTime:" + prohibitTime);
+                    log.trace("C-canAccessIfUnitTimeNotOver** : prohibitTime:" + prohibitTime);
                     if (prohibitTime == 0) {
                         //prohibit access until unit time period is over
                         this.nextAccessTime = this.firstAccessTime + configuration.getUnitTime();
-                     //   log.info("A-canAccessIfUnitTimeNotOver** : firstAccessTime:" + this.firstAccessTime);
-                     //   log.info("B-canAccessIfUnitTimeNotOver** : nextAccessTime:" + this.nextAccessTime);
+                     //   log.trace("A-canAccessIfUnitTimeNotOver** : firstAccessTime:" + this.firstAccessTime);
+                     //   log.trace("B-canAccessIfUnitTimeNotOver** : nextAccessTime:" + this.nextAccessTime);
                     } else {
                         //if there is a prohibit time period in configuration ,then
                         //set it as prohibit period
                         this.nextAccessTime = currentTime + prohibitTime;
-                     //   log.info("C-canAccessIfUnitTimeNotOver** : nextAccessTime:" + this.nextAccessTime);
+                     //   log.trace("C-canAccessIfUnitTimeNotOver** : nextAccessTime:" + this.nextAccessTime);
                     }
                     if (log.isDebugEnabled()) {
                         String type = ThrottleConstants.IP_BASE == configuration.getType() ?
@@ -206,7 +206,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                     // Send the current state to others (clustered env)
                     throttleContext.flushCallerContext(this, id);
                 } else { // second to onwards exceeding requests //  TODO: CC1: analyze this and change if needed
-                   // log.info("canAccessIfUnitTimeNotOver** Else of (if caller has not already prohibit) : (nextAccessTime != 0)");
+                   // log.trace("canAccessIfUnitTimeNotOver** Else of (if caller has not already prohibit) : (nextAccessTime != 0)");
                     // else , if the caller has already prohibit and prohibit
                     // time period has already over
                     if (this.nextAccessTime <= currentTime) {
@@ -232,7 +232,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                         this.localCount.set(1);
                         this.firstAccessTime = currentTime;
                         this.nextTimeWindow = currentTime + configuration.getUnitTime();
-                        log.info("$$$UTNO globalCount:" + this.globalCount + " , localCount:" + this.localCount +
+                        log.trace("$$$UTNO globalCount:" + this.globalCount + " , localCount:" + this.localCount +
                                 ", firstAccessTime:" + this.firstAccessTime + " , nextTimeWindow:" + this.nextTimeWindow);
                         throttleContext.replicateTimeWindow(this.id); // 1-WindowReplicator
                         throttleContext.addAndFlushCallerContext(this, this.id); // 2-ThrottleCounterReplicator
@@ -253,7 +253,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
             }
 
         }
-        log.info("$$$ Decission made");
+        log.trace("$$$ Decission made");
         return canAccess;
     }
 
@@ -267,12 +267,12 @@ public abstract class CallerContext implements Serializable, Cloneable {
      */
     private boolean canAccessIfUnitTimeOver(CallerConfiguration configuration, ThrottleContext throttleContext, long currentTime) {
 
-        //log.info("canAccessIfUnitTimeOver***");
+        //log.trace("canAccessIfUnitTimeOver***");
         boolean canAccess = false;
         // if number of access for a unit time is less than MAX and
         // if the unit time period (session time) has just over
         int maxRequest = configuration.getMaximumRequestPerUnitTime();
-        log.info("%%% : canAccessIfUnitTimeOver**  globalCount:" + this.globalCount + " , localCount:" + this.localCount +
+        log.trace("%%% : canAccessIfUnitTimeOver**  globalCount:" + this.globalCount + " , localCount:" + this.localCount +
                 ", firstAccessTime:" + this.firstAccessTime + " , nextTimeWindow:" + this.nextTimeWindow + " localHits:"
                 + this.localHits + " isThrottleParamSyncingModeSync:" + isThrottleParamSyncingModeSync);
         boolean isThrottleParamSyncingModeSync_local = false;
@@ -283,16 +283,16 @@ public abstract class CallerContext implements Serializable, Cloneable {
         if (maxRequest != 0) {
             // first req, after exceeding previous window if in previous window, the max limit was not exceeded
             if ((this.globalCount.get() + this.localCount.get()) < maxRequest) {
-                log.info("%%%AAA");
-                if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) { // remove this condition considering localHits
-                    if (isThrottleParamSyncingModeSync_local) {
-                        log.info("%%% Going to run throttle param syncing in sync mode");
-                        syncThrottleWindowParams();
-                        syncThrottleCounterParams();
-                    }
-                }
+                log.trace("%%%AAA");
+//                if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) { // remove this condition considering localHits
+//                    if (isThrottleParamSyncingModeSync_local) {
+//                        log.trace("%%% Going to run throttle param syncing in sync mode");
+//                        syncThrottleWindowParams();
+//                        syncThrottleCounterParams();
+//                    }
+//                }
                 if (this.nextTimeWindow != 0) {
-                    log.info("%%%BBB");
+                    log.trace("%%%BBB");
 
                     // Removes and sends the current state to others  (clustered env)
                     //remove previous callercontext instance
@@ -307,7 +307,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                     }
                     // registers caller and send the current state to others (clustered env)
                     throttleContext.addAndFlushCallerContext(this, id);
-                    log.info("%%% : canAccessIfUnitTimeOver**  globalCount:" + this.globalCount + " , localCount:" + this.localCount +
+                    log.trace("%%% : canAccessIfUnitTimeOver**  globalCount:" + this.globalCount + " , localCount:" + this.localCount +
                             ", firstAccessTime:" + this.firstAccessTime + " , nextTimeWindow:" + this.nextTimeWindow);
 
                 }
@@ -321,17 +321,17 @@ public abstract class CallerContext implements Serializable, Cloneable {
                 canAccess = true; // this is bonus access
                 //next time callers can access as a new one
             } else { // if in previous window, the max limit was exceeded
-                log.info("CCC");
+                log.trace("CCC");
 
                 // if caller in prohibit session  and prohibit period has just over
                 if ((this.nextAccessTime == 0) || (this.nextAccessTime <= currentTime)) {
-                    if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) { // remove this condition considering localHits
-                        if (isThrottleParamSyncingModeSync_local) {
-                            log.info("%%% Going to run throttle param syncing in sync mode");
-                            syncThrottleWindowParams();
-                            syncThrottleCounterParams();
-                        }
-                    }
+//                    if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) { // remove this condition considering localHits
+//                        if (isThrottleParamSyncingModeSync_local) {
+//                            log.trace("%%% Going to run throttle param syncing in sync mode");
+//                            syncThrottleWindowParams();
+//                            syncThrottleCounterParams();
+//                        }
+//                    }
 
                     if (log.isDebugEnabled()) {
                         log.debug("CallerContext Checking access if unit time over>> Access allowed=" + maxRequest
@@ -347,7 +347,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                     // reset the states so that, this is the first access
                     this.nextAccessTime = 0;
                     canAccess = true;
-                    log.info("### 9 - canAccessIfUnitTimeOver***");
+                    log.trace("### 9 - canAccessIfUnitTimeOver***");
 
                     //setIsThrottleParamSyncingModeSync(false); // as canAccess is set as 'true'
                     this.localHits.set(0);
@@ -359,7 +359,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                     // registers caller and send the current state to others (clustered env)
                     throttleContext.replicateTimeWindow(this.id);
                     throttleContext.addAndFlushCallerContext(this, id);
-                    log.info("DDD : canAccessIfUnitTimeOver**  globalCount:" + this.globalCount + " , localCount:" + this.localCount +
+                    log.trace("DDD : canAccessIfUnitTimeOver**  globalCount:" + this.globalCount + " , localCount:" + this.localCount +
                             ", firstAccessTime:" + this.firstAccessTime + " , nextTimeWindow:" + this.nextTimeWindow);
                     if (log.isDebugEnabled()) {
                         log.debug("Caller=" + this.getId() + " has reset counters and added for replication when unit "
@@ -381,48 +381,48 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
     }
 
-    /**
+   /* *//**
      *
-     */
+     *//*
     public void syncThrottleCounterParams() {
         if (getNextTimeWindow() > System.currentTimeMillis()) {
-            log.info("### 4 - Running throttleCounterParamSync. ");
+            log.trace("### 4 - Running throttleCounterParamSync. ");
             String id = getId();
             long localCounter = localCount.get();
             resetLocalCounter();
             Long distributedCounter = SharedParamManager.asyncGetAndAddDistributedCounter(id, localCounter);
-            log.info("$$$ 4.1 sharedCounter increased from " + distributedCounter + " to:" + SharedParamManager.getDistributedCounter(id));
+            log.trace("$$$ 4.1 sharedCounter increased from " + distributedCounter + " to:" + SharedParamManager.getDistributedCounter(id));
 
             //Update instance's global counter value with distributed counter
             long x = getGlobalCounter();
             setGlobalCounter(distributedCounter + localCounter);
-            log.info("### 4.2 globalCounter increased from:" + x + " to : " + this.globalCount);
-            log.info("### local counter reseted to 0");
+            log.trace("### 4.2 globalCounter increased from:" + x + " to : " + this.globalCount);
+            log.trace("### local counter reseted to 0");
         }
-    }
+    }*/
 
-    /**
+   /* *//**
      *
-     */
+     *//*
     public void throttleCounterParamSync1() {
         if (getNextTimeWindow() > System.currentTimeMillis()) {
-            log.info("### 4 - Running throttleCounterParamSync. ");
+            log.trace("### 4 - Running throttleCounterParamSync. ");
             String id = getId();
             long localCounter = localCount.get();
             resetLocalCounter();
             Long distributedCounter = SharedParamManager.asyncGetAndAddDistributedCounter(id, localCounter);
-            log.info("$$$ 4.1 sharedCounter increased from " + distributedCounter + " to:" + SharedParamManager.getDistributedCounter(id));
+            log.trace("$$$ 4.1 sharedCounter increased from " + distributedCounter + " to:" + SharedParamManager.getDistributedCounter(id));
 
             //Update instance's global counter value with distributed counter
             long x = getGlobalCounter();
             setGlobalCounter(distributedCounter + localCounter);
-            log.info("### 4.2 globalCounter increased from:" + x + " to : " + this.globalCount);
-            log.info("### local counter reseted to 0");
+            log.trace("### 4.2 globalCounter increased from:" + x + " to : " + this.globalCount);
+            log.trace("### local counter reseted to 0");
         }
-    }
+    }*/
 
-    public void syncThrottleWindowParams() {
-        log.info("### 5 - Running throttleWindowParamSync. ");
+   /* public void syncThrottleWindowParams() {
+        log.trace("### 5 - Running throttleWindowParamSync. ");
 
         // ThrottleWindowReplicator run() method
         String callerId = getId();
@@ -432,11 +432,11 @@ public abstract class CallerContext implements Serializable, Cloneable {
         // First if statement check whether local first access time is lower than the current
         // global counter if so it will adjust the local first access time to global time to
         // adjust the time window
-        log.info("INITIAL ** sharedTimestamp :" + sharedTimestamp + " sharedNextWindow :" + sharedNextWindow + " localFirstAccessTime :" + localFirstAccessTime);
+        log.trace("INITIAL ** sharedTimestamp :" + sharedTimestamp + " sharedNextWindow :" + sharedNextWindow + " localFirstAccessTime :" + localFirstAccessTime);
 
-        log.info("$$$ localCounter:" + this.localCount + ", globalCounter:" + this.globalCount + ", localHits:" + this.localHits);
+        log.trace("$$$ localCounter:" + this.localCount + ", globalCounter:" + this.globalCount + ", localHits:" + this.localHits);
         if (localFirstAccessTime < sharedTimestamp) {  // TODO:  this condition needs review
-            log.info("Hit if ***** A1");
+            log.trace("Hit if ***** A1");
             setFirstAccessTime(sharedTimestamp);
             setNextTimeWindow(sharedNextWindow);
             setGlobalCounter(SharedParamManager.getDistributedCounter(callerId));
@@ -483,7 +483,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                 log.debug("Complete resetting time window of=" + callerId);
             }
         }
-    }
+    }*/
 
     /**
      * Clean up the callers - remove all callers that have expired their time window
@@ -496,11 +496,11 @@ public abstract class CallerContext implements Serializable, Cloneable {
                                ThrottleContext throttleContext, long currentTime) {
 
       //  if (log.isDebugEnabled()) {
-            log.info("Cleaning up the inactive caller's states ... ");
+            log.trace("Cleaning up the inactive caller's states ... ");
        // }
         if (configuration == null) {
            // if (log.isDebugEnabled()) {
-                log.info("Couldn't find the configuration .");
+                log.trace("Couldn't find the configuration .");
            // }
             return;
         }
@@ -512,7 +512,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
             if ((this.globalCount.get() + this.localCount.get()) <= (maxRequest - 1)) {
                 if (this.nextTimeWindow != 0 && this.nextTimeWindow < (currentTime - this.unitTime)) {
                   //  if (log.isDebugEnabled()) {
-                        log.info("Removing caller with id " + this.id);
+                        log.trace("Removing caller with id " + this.id);
                   //  }
                     //Removes the previous callercontext and Sends the current state to
                     //  others (clustered env)
@@ -566,8 +566,8 @@ public abstract class CallerContext implements Serializable, Cloneable {
             initAccess(configuration, throttleContext, currentTime); // sets firstAccessTime, nextTimeWindow
         }
         // if unit time period (session time) is not over
-        log.info("\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime + " (" + getReadableTime(currentTime) + ") " + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId() );
-        log.info("### Before evaluating:: localHits :" + localHits.get() + " ### localCount :" + localCount.get()
+        log.trace("\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime + " (" + getReadableTime(currentTime) + ") " + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId() );
+        log.trace("### Before evaluating:: localHits :" + localHits.get() + " ### localCount :" + localCount.get()
                 + " ### globalCount :" + globalCount.get() + " MaxLimit:" + configuration.getMaximumRequestPerUnitTime()
                 + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 
@@ -577,9 +577,9 @@ public abstract class CallerContext implements Serializable, Cloneable {
             long startTime = System.currentTimeMillis();
             canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext, currentTime);
             long duration = System.currentTimeMillis() - startTime;
-            log.info("*********** LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+            log.debug("*********** LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
         } else {
-            log.info(">>>> ERROR: CALLED OLD METHOD");
+            log.error(">>>> ERROR: CALLED OLD METHOD");
             canAccess = canAccessBasedOnUnitTime(configuration, throttleContext, currentTime);
         }
 //        if (this.nextTimeWindow > currentTime) {
@@ -590,10 +590,10 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
 //        if (canAccess) {
 //            localHits.getAndIncrement();
-//            log.info("### CCcA localHits:" + localHits.get());
+//            log.trace("### CCcA localHits:" + localHits.get());
 //        }
 //        if (throttleProperties.isThrottleSyncAsyncHybridModeEnabled() && this.localHits.get() == localQuota) {
-//                log.info("### 3 - Local quota reached. SWITCHED TO SYNC MODE !!!. this.localHits : " + this.localHits.get());
+//                log.trace("### 3 - Local quota reached. SWITCHED TO SYNC MODE !!!. this.localHits : " + this.localHits.get());
 //            this.isThrottleParamSyncingModeSync = true;
 //        }
 
@@ -644,9 +644,9 @@ public abstract class CallerContext implements Serializable, Cloneable {
     }
 
     public void setLocalCounter(long counter) {
-        log.info(">>> changing local counter from:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+        log.trace(">>> changing local counter from:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
         localCount.set(counter);
-        log.info(">>> changing local counter to:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+        log.trace(">>> changing local counter to:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
     }
 
     public long getLocalCounter() {

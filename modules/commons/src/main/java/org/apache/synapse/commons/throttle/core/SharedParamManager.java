@@ -22,7 +22,7 @@ public class SharedParamManager {
 	 */
 	public static long getDistributedCounter(String id) {
 		if (log.isDebugEnabled()) {
-			log.debug("GET TIMESTAMP WITH ID " + id);
+			log.trace("GET TIMESTAMP WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
 		DistributedCounterManager distributedCounterManager =
@@ -49,7 +49,7 @@ public class SharedParamManager {
 	 */
 	public static void setDistributedCounter(String id, long value) {
 		if (log.isDebugEnabled()) {
-			log.debug("SETTING COUNTER WITH ID " + id);
+			log.trace("SETTING COUNTER WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
 		DistributedCounterManager distributedCounterManager =
@@ -92,7 +92,7 @@ public class SharedParamManager {
 	 */
 	public static long asyncGetAndAddDistributedCounter(String id, long value) {
 		if (log.isDebugEnabled()) {
-			log.debug("ASYNC CREATING AND SETTING COUNTER WITH ID " + id);
+			log.trace("ASYNC CREATING AND SETTING COUNTER WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
 		DistributedCounterManager distributedCounterManager =
@@ -141,7 +141,7 @@ public class SharedParamManager {
 	 */
 	public static void removeCounter(String id) {
 		if (log.isDebugEnabled()) {
-			log.debug("REMOVING COUNTER WITH ID " + id);
+			log.trace("REMOVING COUNTER WITH ID " + id);
 		}
 		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
 		DistributedCounterManager distributedCounterManager =
@@ -162,7 +162,7 @@ public class SharedParamManager {
 	 */
 	public static long getSharedTimestamp(String id) {
 		if (log.isDebugEnabled()) {
-			log.debug("GET TIMESTAMP WITH ID " + id);
+			log.trace("GET TIMESTAMP WITH ID " + id);
 		}
 		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
 
@@ -191,7 +191,7 @@ public class SharedParamManager {
 	 */
 	public static void setSharedTimestamp(String id, long timestamp) {
 		if (log.isDebugEnabled()) {
-			log.debug("SETTING TIMESTAMP WITH ID" + id);
+			log.trace("SETTING TIMESTAMP WITH ID" + id);
 		}
 		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
 		DistributedCounterManager distributedCounterManager =
@@ -210,7 +210,7 @@ public class SharedParamManager {
 	 */
 	public static void removeTimestamp(String id) {
 		if (log.isDebugEnabled()) {
-			log.debug("REMOVING TIMESTAMP WITH ID " + id);
+			log.trace("REMOVING TIMESTAMP WITH ID " + id);
 		}
 		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
 		DistributedCounterManager distributedCounterManager =
@@ -225,7 +225,7 @@ public class SharedParamManager {
 
 	public static void setExpiryTime(String id, long expiryTimeStamp) {
 		if (log.isDebugEnabled()) {
-			log.debug("SETTING Expiry WITH ID " + id);
+			log.trace("SETTING Expiry WITH ID " + id);
 		}
 		String sharedCounterKey = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
 		String sharedTimeStampKey = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
@@ -233,9 +233,9 @@ public class SharedParamManager {
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
-			log.debug("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
+			log.trace("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
 			distributedCounterManager.setExpiry(sharedCounterKey, expiryTimeStamp);
-			log.debug("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
+			log.trace("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
 			distributedCounterManager.setExpiry(sharedTimeStampKey, expiryTimeStamp);
 
 		}
@@ -244,7 +244,7 @@ public class SharedParamManager {
 
 	//	public static long getExpiryTime(String id) {
 //		if (log.isDebugEnabled()) {
-//			log.debug("GETTING EXPIRY TIME WITH ID " + id);
+//			log.trace("GETTING EXPIRY TIME WITH ID " + id);
 //		}
 //
 //		DistributedCounterManager distributedCounterManager =
@@ -284,11 +284,11 @@ public class SharedParamManager {
 				if (responseCode == 1) {
 					// lock acquired
 					long timeNow = System.currentTimeMillis();
-					log.info("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" +
+					log.trace("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" +
 							"Lock acquired for key: " + callerContextId + " within " +
 					         (timeNow - startTime) + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 					distributedCounterManager.setExpiry(callerContextId, timeNow +
-					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
+					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2); // TODO: set the expiry in the same redis call with multi
 					return true;
 				} else if (responseCode == 0) {
 					long timeNow = System.currentTimeMillis();
@@ -301,7 +301,7 @@ public class SharedParamManager {
 
 					try {
 						Thread.sleep(5);
-						log.info("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" + "Retrying to get lock for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+						log.trace("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" + "Retrying to get lock for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
@@ -319,7 +319,7 @@ public class SharedParamManager {
 
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
 			distributedCounterManager.removeLock(callerContextId);
-			log.info("current time:" + System.currentTimeMillis() + "(" + CallerContext.getReadableTime(System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+			log.trace("current time:" + System.currentTimeMillis() + "(" + CallerContext.getReadableTime(System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 		}
 		return false;
 	}
