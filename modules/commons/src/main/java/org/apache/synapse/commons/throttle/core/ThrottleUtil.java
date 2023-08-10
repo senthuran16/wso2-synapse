@@ -30,7 +30,6 @@ import javax.cache.Caching;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -165,6 +164,12 @@ public class ThrottleUtil {
 						if (StringUtils.isNotEmpty(throttleSyncAsyncHybridModeEnabled)) {
 							throttleProperties.setThrottleSyncAsyncHybridModeEnabled(
 									Boolean.parseBoolean(throttleSyncAsyncHybridModeEnabled));
+						}
+					}
+					if (key.contains(ThrottleConstants.HYBRID_THROTTLE_PROCESSOR_WINDOW_TYPE)) {
+						String hybridThrottleProcessorWindowType = properties.getProperty(key);
+						if (StringUtils.isNotEmpty(hybridThrottleProcessorWindowType)) {
+							throttleProperties.setHybridThrottleProcessorWindowType(hybridThrottleProcessorWindowType);
 						}
 					}
 				}

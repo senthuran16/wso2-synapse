@@ -300,7 +300,7 @@ public class SharedParamManager {
 					}
 
 					try {
-						Thread.sleep(5);
+						Thread.sleep(5); //TODO: make this configurable
 						log.trace("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" + "Retrying to get lock for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);

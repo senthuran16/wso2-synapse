@@ -22,6 +22,8 @@ import javax.xml.namespace.QName;
 public final class ThrottleConstants {
 
     public static final String HAZELCAST = "hazelcast";
+//    public static final String START_TIME_BASED = "startTimeBased"; ;
+//    public static final String CLOCK_TIME_BASED = "clockTimeBased"; ;
 
     private ThrottleConstants() {
 
@@ -187,4 +189,6 @@ public final class ThrottleConstants {
     public static final String DISTRIBUTED_COUNTER_TYPE = "throttling.distributed.counter.type";
     public static final String DISTRIBUTED_COUNTER_CONFIGURATIONS  = "throttling.distributed.counter.configurations.";
     public static final String THROTTLE_SYNC_ASYNC_HYBRID_MODE_ENABLED = "throttling.sync-async_hybrid_mode.enable";
+
+    public static final String HYBRID_THROTTLE_PROCESSOR_WINDOW_TYPE = "throttling.hybrid_throttle_processor_window.type";
 }

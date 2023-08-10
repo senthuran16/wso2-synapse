@@ -74,7 +74,7 @@ public class ThrottleServiceDataHolder {
 	}
 
 	public void removeDistributedThrottleProcessor(DistributedThrottleProcessor distributedThrottleProcessor){
-		if (distributedThrottleProcessor != null){
+		if (distributedThrottleProcessor != null) {
 			distributedThrottleProcessorMap.remove(distributedThrottleProcessor.getType());
 		}
 	}

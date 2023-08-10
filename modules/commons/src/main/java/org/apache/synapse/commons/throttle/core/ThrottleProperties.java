@@ -37,6 +37,7 @@ public class ThrottleProperties implements Serializable {
 	private String distributedCounterType = ThrottleConstants.HAZELCAST;
 	private boolean throttleSyncAsyncHybridModeEnabled = false;
 	private String distributedThrottleProcessorType = "hybrid";
+	private String hybridThrottleProcessorWindowType;
 
 	public String getWindowReplicatorPoolSize() {
 		return windowReplicatorPoolSize;
@@ -177,4 +178,19 @@ public class ThrottleProperties implements Serializable {
 		return throttleSyncAsyncHybridModeEnabled;
 	}
 
+	public void setHybridThrottleProcessorWindowType(String hybridThrottleProcessorWindowType) { // setThrottleProcessWindowType
+		this.hybridThrottleProcessorWindowType = hybridThrottleProcessorWindowType;
+	}
+
+	public String getHybridThrottleProcessorWindowType() {
+		return hybridThrottleProcessorWindowType;
+	}
+
+//	public boolean isThrottleProcessorStartTimeTimeBased() {
+//		return ThrottleConstants.START_TIME_BASED.equals(hybridThrottleProcessorWindowType);
+//	}
+//
+//	public boolean isThrottleProcessorClockTimeBased() {
+//		return ThrottleConstants.CLOCK_TIME_BASED.equals(hybridThrottleProcessorWindowType);
+//	}
 }
