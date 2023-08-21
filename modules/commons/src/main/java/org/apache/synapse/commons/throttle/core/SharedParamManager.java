@@ -61,6 +61,35 @@ public class SharedParamManager {
 		}
 	}
 
+	public static void setDistributedCounterWithExpiry(String id, long value, long expiryTime) {
+		if (log.isDebugEnabled()) {
+			log.trace("SETTING COUNTER WITH ID " + id);
+		}
+		id = ThrottleConstants.THROTTLE_SHARED_COUNTER_KEY + id;
+		DistributedCounterManager distributedCounterManager =
+				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+			//distributedCounterManager.setCounter(id, value);
+			distributedCounterManager.setCounterWithExpiry(id, value, expiryTime);
+		} else {
+			counters.put(id, value);
+		}
+	}
+
+	public static void setSharedTimestampWithExpiry(String id, long timestamp, long expiryTime) {
+		if (log.isDebugEnabled()) {
+			log.trace("SETTING TIMESTAMP WITH ID" + id);
+		}
+		String key = ThrottleConstants.THROTTLE_TIMESTAMP_KEY + id;
+		DistributedCounterManager distributedCounterManager =
+				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
+			distributedCounterManager.setTimestampWithExpiry(key, timestamp, expiryTime);
+		} else {
+			timestamps.put(id, timestamp);
+		}
+	}
+
 	/**
 	 * Add given value to the distribute counter of caller context of given id. If it's not
 	 * distributed return local counter

@@ -38,6 +38,7 @@ public interface DistributedCounterManager {
      */
     public void setCounter(String key, long value);
 
+    public void setCounterWithExpiry(String key, long value, long expiryTime);
     /**
      * This method used to add and return the distributed counter value.
      *
@@ -74,12 +75,14 @@ public interface DistributedCounterManager {
      */
     public long asyncGetAndAlterCounter(String key, long value);
 
-    /**
-     * This method returns shared TimeStamp of distributed Key.
-     *
-     * @param key key to check in distributed map.
-     * @return timestamp value of key.
-     */
+    public long asyncGetAlterAndSetExpiryOfCounter(String key, long value, long expiryTimeStamp);
+
+        /**
+         * This method returns shared TimeStamp of distributed Key.
+         *
+         * @param key key to check in distributed map.
+         * @return timestamp value of key.
+         */
     public long getTimestamp(String key);
 
     /**
@@ -90,6 +93,7 @@ public interface DistributedCounterManager {
      */
     public void setTimestamp(String key, long timeStamp);
 
+    public void setTimestampWithExpiry(String key, long timeStamp, long expiryTimeStamp);
     /**
      * This method removes the timestamp relevant to key.
      *

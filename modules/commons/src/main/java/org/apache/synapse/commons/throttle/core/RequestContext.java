@@ -1,11 +1,11 @@
 package org.apache.synapse.commons.throttle.core;
 
 public class RequestContext {
+    private long requestTime;
 
     public RequestContext(long requestTime) {
         this.requestTime = System.currentTimeMillis();
     }
-    private long requestTime;
 
     public long getRequestTime() {
         return requestTime;
