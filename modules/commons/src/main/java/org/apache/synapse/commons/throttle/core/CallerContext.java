@@ -69,7 +69,6 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
     /* The Id of caller */
     private String id;
-    private long syncModeLastUpdatedTime;
 
     public CallerContext clone() throws CloneNotSupportedException {
         super.clone();
@@ -537,14 +536,5 @@ public abstract class CallerContext implements Serializable, Cloneable {
 
     public void setNextAccessTime(long nextAccessTime) {
         this.nextAccessTime = nextAccessTime;
-    }
-
-
-    public void setSyncModeLastUpdatedTime(long syncModeLastUpdatedTime) {
-        this.syncModeLastUpdatedTime = syncModeLastUpdatedTime;
-    }
-
-    public long getSyncModeLastUpdatedTime() {
-        return syncModeLastUpdatedTime;
     }
 }
