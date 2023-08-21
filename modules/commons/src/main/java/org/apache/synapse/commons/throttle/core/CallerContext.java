@@ -375,6 +375,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
      */
     public boolean canAccess(ThrottleContext throttleContext, CallerConfiguration configuration,
                              long currentTime) throws ThrottleException {
+        RequestContext requestContext = new RequestContext(currentTime);
         boolean canAccess;
         if (configuration == null) {
             if (log.isDebugEnabled()) {
@@ -398,7 +399,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
                 ThrottleServiceDataHolder.getInstance().getDistributedThrottleProcessor();
         if (distributedThrottleProcessor != null && distributedThrottleProcessor.isEnable()) {
             long startTime = System.currentTimeMillis();
-            canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext, currentTime);
+            canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext, requestContext);
             long duration = System.currentTimeMillis() - startTime;
             log.debug("*********** LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
         } else {
