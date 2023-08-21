@@ -109,6 +109,8 @@ public interface DistributedCounterManager {
 
     public long setLock(String key, String value);
 
+    public long setLockWithExpiry(String key, String value, long expiryTimeStamp);
+
     public long getKeyLockRetrievalTimeout();
 
     public void removeLock(String key);

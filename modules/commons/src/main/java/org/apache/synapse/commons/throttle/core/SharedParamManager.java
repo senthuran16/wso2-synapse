@@ -280,28 +280,28 @@ public class SharedParamManager {
 			long responseCode;
 			long startTime = System.currentTimeMillis();
 			do {
-				responseCode = distributedCounterManager.setLock(callerContextId, lockValue);
+				responseCode = distributedCounterManager.setLockWithExpiry(callerContextId, lockValue, System.currentTimeMillis() +
+					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
+				long timeNow = System.currentTimeMillis();
+
 				if (responseCode == 1) {
 					// lock acquired
-					long timeNow = System.currentTimeMillis();
 					log.trace("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" +
 							"Lock acquired for key: " + callerContextId + " within " +
 					         (timeNow - startTime) + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
-					distributedCounterManager.setExpiry(callerContextId, timeNow +
-					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2); // TODO: set the expiry in the same redis call with multi
 					return true;
 				} else if (responseCode == 0) {
-					long timeNow = System.currentTimeMillis();
-					long timeElapsed = timeNow - startTime;
+					long time = System.currentTimeMillis();
+					long timeElapsed = time - startTime;
 					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
-						log.warn("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" +"Unable to acquire lock for key: " + callerContextId + " within the configured " +
+						log.warn("current time:" + time + "(" + CallerContext.getReadableTime(time) + ")" +"Unable to acquire lock for key: " + callerContextId + " within the configured " +
 						         "timeout period. Elapsed time: " + timeElapsed + " ms"  + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 						return false;
 					}
 
 					try {
-						Thread.sleep(5); //TODO: make this configurable
-						log.trace("current time:" + timeNow + "(" + CallerContext.getReadableTime(timeNow) + ")" + "Retrying to get lock for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+						Thread.sleep(5); //TODO: Do we need to make this configurable?
+						log.trace("current time:" + time + "(" + CallerContext.getReadableTime(time) + ")" + "Retrying to get lock for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
@@ -313,7 +313,7 @@ public class SharedParamManager {
 	}
 
 	// no need to check the value before removal
-	public static boolean releaseSharedKeys(String callerContextId) {
+	public static void releaseSharedKeys(String callerContextId) {
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 
@@ -321,6 +321,5 @@ public class SharedParamManager {
 			distributedCounterManager.removeLock(callerContextId);
 			log.trace("current time:" + System.currentTimeMillis() + "(" + CallerContext.getReadableTime(System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 		}
-		return false;
 	}
 }
