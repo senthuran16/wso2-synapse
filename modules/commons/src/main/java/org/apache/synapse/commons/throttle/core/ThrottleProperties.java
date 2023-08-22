@@ -161,12 +161,10 @@ public class ThrottleProperties implements Serializable {
 	}
 
 	public String getDistributedThrottleProcessorType() {
-
 		return distributedThrottleProcessorType;
 	}
 
 	public void setDistributedThrottleProcessorType(String distributedThrottleProcessorType) {
-
 		this.distributedThrottleProcessorType = distributedThrottleProcessorType;
 	}
 
@@ -178,19 +176,12 @@ public class ThrottleProperties implements Serializable {
 		return throttleSyncAsyncHybridModeEnabled;
 	}
 
-	public void setHybridThrottleProcessorWindowType(String hybridThrottleProcessorWindowType) { // setThrottleProcessWindowType
+	public void setHybridThrottleProcessorWindowType(
+			String hybridThrottleProcessorWindowType) {
 		this.hybridThrottleProcessorWindowType = hybridThrottleProcessorWindowType;
 	}
 
 	public String getHybridThrottleProcessorWindowType() {
 		return hybridThrottleProcessorWindowType;
 	}
-
-//	public boolean isThrottleProcessorStartTimeTimeBased() {
-//		return ThrottleConstants.START_TIME_BASED.equals(hybridThrottleProcessorWindowType);
-//	}
-//
-//	public boolean isThrottleProcessorClockTimeBased() {
-//		return ThrottleConstants.CLOCK_TIME_BASED.equals(hybridThrottleProcessorWindowType);
-//	}
 }

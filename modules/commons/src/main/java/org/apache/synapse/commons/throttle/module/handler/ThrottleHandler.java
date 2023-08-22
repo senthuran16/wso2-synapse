@@ -386,7 +386,6 @@ public abstract class ThrottleHandler extends AbstractHandler {
     private boolean doRoleBasedAccessThrottling(Throttle throttle, MessageContext messageContext) throws
             AxisFault,ThrottleException {
 
-        log.info(">>>> doRoleBasedAccessThrottling() running");
         boolean canAccess = true;
         if (throttle.getThrottleContext(ThrottleConstants.ROLE_BASED_THROTTLE_KEY) == null) {
             //if no role base throttle config return immediately

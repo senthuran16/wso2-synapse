@@ -1,20 +1,20 @@
 /*
- *  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
- *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+*  Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 package org.apache.synapse.commons.throttle.core;
 
@@ -39,7 +39,7 @@ public class ThrottleWindowReplicator {
 	private static final Log log = LogFactory.getLog(ThrottleWindowReplicator.class);
 	private static int replicatorPoolSize ;
 	private ConfigurationContext configContext;
-	private ThrottleProperties throttleProperties;
+private ThrottleProperties throttleProperties;
 	private int replicatorCount;
 
 	private Set<String> set = new ConcurrentSkipListSet<String>();
@@ -97,13 +97,12 @@ public class ThrottleWindowReplicator {
 
 		public void run() {
 			try {
-				log.trace("Start running ThrottleWindowReplicatorTask.");
+				log.debug("Start running ThrottleWindowReplicatorTask.");
 				if (!set.isEmpty()) {
 					for (String key : set) {
 						String callerId;
 						long localFirstAccessTime;
 						synchronized (key.intern()) {
-							log.debug("Running ThrottleWindowReplicatorTask for key :" + key);
 							ThrottleDataHolder dataHolder = (ThrottleDataHolder)
 									configContext.getProperty(ThrottleConstants.THROTTLE_INFO_KEY);
 							CallerContext callerContext = dataHolder.getCallerContext(key);
@@ -126,13 +125,13 @@ public class ThrottleWindowReplicator {
 									// check whether the first access time of local is in between the global time window
 									// if so this will set local caller context time window to global
 								} else if (localFirstAccessTime > sharedTimestamp
-										&& localFirstAccessTime < sharedNextWindow) {
+								           && localFirstAccessTime < sharedNextWindow) {
 									callerContext.setFirstAccessTime(sharedTimestamp);
 									callerContext.setNextTimeWindow(sharedNextWindow);
 									callerContext.setGlobalCounter(SharedParamManager.getDistributedCounter(callerId));
 									if (log.isDebugEnabled()) {
 										log.debug("Setting time windows of caller context in intermediate interval=" +
-												callerId);
+										         callerId);
 									}
 									//If above two statements not meets, this is the place where node set new window if
 									// global first access time is 0, then it will be the beginning of the throttle time time

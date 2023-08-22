@@ -24,9 +24,6 @@ import org.apache.synapse.commons.throttle.core.internal.DistributedThrottleProc
 import org.apache.synapse.commons.throttle.core.internal.ThrottleServiceDataHolder;
 
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -48,10 +45,13 @@ public abstract class CallerContext implements Serializable, Cloneable {
     private long nextTimeWindow = 0;
     /* The globalCount to keep track number of request */
     private AtomicLong globalCount = new AtomicLong(0);
-    private long localQuota = 2;
+    private long localQuota;
     private String roleId;
     private long unitTime;
-    // isThrottleParamSyncingModeSync - this is specific for each API EP. Should be updated via redis subscription
+    /*
+     This is specific for each API EP
+     if this is true, then syncing of throttle parameter with global redis counters be synced will be done in sync mode
+     */
     private boolean isThrottleParamSyncingModeSync;
     private ThrottleProperties throttleProperties;
 
@@ -158,7 +158,6 @@ public abstract class CallerContext implements Serializable, Cloneable {
                 // Send the current state to others (clustered env)
                 throttleContext.flushCallerContext(this, id);
                 // can complete access
-
             } else {
                 //else , if caller has not already prohibit
                 if (this.nextAccessTime == 0) {
@@ -393,26 +392,25 @@ public abstract class CallerContext implements Serializable, Cloneable {
             initAccess(configuration, throttleContext, currentTime);
         }
         // if unit time period (session time) is not over
-        log.debug("\n\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime + " (" + getReadableTime(currentTime) + ") " + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
-        DistributedThrottleProcessor distributedThrottleProcessor =
-                ThrottleServiceDataHolder.getInstance().getDistributedThrottleProcessor();
+        if (log.isDebugEnabled()) {
+            log.debug("\n\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime +
+                    " (" + ThrottleUtil.getReadableTime(currentTime) + ") " + " Thread name: " + Thread.currentThread().getName()
+                    + " Thread id: " + Thread.currentThread().getId());
+        }
+
+        DistributedThrottleProcessor distributedThrottleProcessor = ThrottleServiceDataHolder.getInstance()
+                .getDistributedThrottleProcessor();
         if (distributedThrottleProcessor != null && distributedThrottleProcessor.isEnable()) {
             long startTime = System.currentTimeMillis();
-            canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext, requestContext);
+            canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext,
+                    requestContext);
             long duration = System.currentTimeMillis() - startTime;
-            log.debug("*********** LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+            log.debug("LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread()
+                    .getName() + " Thread id: " + Thread.currentThread().getId());
         } else {
             canAccess = canAccessBasedOnUnitTime(configuration, throttleContext, currentTime);
         }
         return canAccess;
-    }
-
-    // TODO: may remove or move this method to some util class
-    public static String getReadableTime(long time) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
-        Date date = new Date(time);
-        String formattedTime = dateFormat.format(date);
-        return formattedTime;
     }
 
     private boolean canAccessBasedOnUnitTime(CallerConfiguration configuration, ThrottleContext throttleContext, long currentTime) {

@@ -70,10 +70,6 @@ public class ThrottleServiceComponent {
 		ThrottleServiceDataHolder.getInstance().removeDistributedCounterManager(distributedCounterManager);
 	}
 
-	/**
-	 *
-	 * @param
-	 */
 	@Reference(
 			name = "distributedThrottleProcessor.instance.service",
 			service = DistributedThrottleProcessor.class,

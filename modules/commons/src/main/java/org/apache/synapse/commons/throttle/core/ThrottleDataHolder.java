@@ -21,7 +21,6 @@ package org.apache.synapse.commons.throttle.core;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -81,10 +80,6 @@ public class ThrottleDataHolder {
             log.debug("ADD CALLER CONTEXT WITH ID" + id);
         }
         callerContextMap.put(id, callerContext);
-        for (Map.Entry entry : callerContextMap.entrySet())
-        {
-            log.debug(">>> addCallerContext :::: key: " + entry.getKey() + "; value: " + entry.getValue());
-        }
     }
 
     public CallerContext getCallerContext(String id){

@@ -337,9 +337,7 @@ public abstract class ThrottleContext {
     public void addAndFlushCallerContext(CallerContext callerContext, String id) {
         if (callerContext != null && id != null) {
             addCaller(callerContext, id);
-            if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-                replicateCaller(id);
-            }
+            replicateCaller(id);
         }
     }
 
@@ -353,9 +351,7 @@ public abstract class ThrottleContext {
         if (dataHolder != null && callerContext != null && id != null) {
             dataHolder.addCallerContext(id, callerContext); // have to do, because we always get
             //  any property as non-replicable
-            if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-                replicateCaller(id);
-            }
+            replicateCaller(id);
         }
     }
 
@@ -370,9 +366,7 @@ public abstract class ThrottleContext {
                 log.debug("REMOVING AND FLUSHING CALLER CONTEXT WITH ID " + id);
             }
             removeCaller(id);
-            if (!ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-                replicateCaller(id);
-            }
+            replicateCaller(id);
         }
     }
 
@@ -383,9 +377,9 @@ public abstract class ThrottleContext {
      */
     public void removeAndDestroyShareParamsOfCaller(String id) {
         if (id != null) {
-           // if(log.isDebugEnabled()) {
+            if(log.isDebugEnabled()) {
                 log.info("REMOVE AND DESTROY OF SHARED PARAM OF CALLER WITH ID " + id);
-           // }
+            }
             removeCaller(id);
             SharedParamManager.removeTimestamp(id);
             SharedParamManager.removeCounter(id);
@@ -489,9 +483,5 @@ public abstract class ThrottleContext {
         if (log.isDebugEnabled()) {
             log.debug("CallerMap Size after cleanup process : " + map.size());
         }
-    }
-
-    public Map getCallersMap() {
-        return callersMap;
     }
 }

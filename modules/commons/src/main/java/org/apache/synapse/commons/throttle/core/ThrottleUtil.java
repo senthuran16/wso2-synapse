@@ -30,6 +30,9 @@ import javax.cache.Caching;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
@@ -206,4 +209,17 @@ public class ThrottleUtil {
             }
             return cache;
         }
-    }
+
+	/**
+	 * Get the readable time from the given epoch timestamp
+	 *
+	 * @param time epoch time
+	 * @return Time in readable format (yyyy-MM-dd HH:mm:ss,SSS)
+	 */
+	public static String getReadableTime(long time) {
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
+		Date date = new Date(time);
+		String formattedTime = dateFormat.format(date);
+		return formattedTime;
+	}
+}

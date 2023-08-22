@@ -22,8 +22,6 @@ import javax.xml.namespace.QName;
 public final class ThrottleConstants {
 
     public static final String HAZELCAST = "hazelcast";
-//    public static final String START_TIME_BASED = "startTimeBased"; ;
-//    public static final String CLOCK_TIME_BASED = "clockTimeBased"; ;
 
     private ThrottleConstants() {
 
