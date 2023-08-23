@@ -48,6 +48,10 @@ public class ThrottleReplicator {
         replicatorPoolSize = Integer.parseInt(throttleProperties.getThrottlingPoolSize());
 
         log.debug("Replicator pool size set to " + replicatorPoolSize);
+        if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+            log.debug("Throttle Sync Async Hybrid Mode is enabled. So throttle replicator task will not be scheduled.");
+            return;
+        }
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(replicatorPoolSize,
                 new ThreadFactory() {
                     @Override

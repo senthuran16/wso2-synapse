@@ -54,6 +54,12 @@ private ThrottleProperties throttleProperties;
 			log.debug("Throttle window replicator pool size set to " + replicatorPoolSize);
 		}
 
+		if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
+			log.debug("Throttle Sync Async Hybrid Mode is enabled. So throttle window replicator task will not be "
+					+ "scheduled.");
+			return;
+		}
+
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(replicatorPoolSize,
 				new ThreadFactory() {
 					public Thread newThread(Runnable r) {
