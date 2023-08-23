@@ -319,11 +319,11 @@ public class SharedParamManager {
 			do {
 				responseCode = distributedCounterManager.setLockWithExpiry(callerContextId, lockValue, System.currentTimeMillis() +
 					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
-				long timeNow = System.currentTimeMillis();
 
 				if (responseCode == 1) {
 					// lock acquired
 					if (log.isTraceEnabled()) {
+						long timeNow = System.currentTimeMillis();
 						log.trace("current time:" + timeNow + "(" + ThrottleUtil.getReadableTime(timeNow) + ")"
 								+ "Lock acquired for key: " + callerContextId + " within " + (timeNow - startTime)
 								+ " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: "
@@ -342,7 +342,7 @@ public class SharedParamManager {
 					}
 
 					try {
-						Thread.sleep(5); //TODO: Do we need to make this configurable?
+						Thread.sleep(5);
 						if (log.isTraceEnabled()) {
 							log.trace("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")"
 									+ "Retrying to get lock for key: " + callerContextId + " Thread name: "

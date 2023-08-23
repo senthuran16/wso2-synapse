@@ -38,6 +38,13 @@ public interface DistributedCounterManager {
      */
     public void setCounter(String key, long value);
 
+    /**
+     * Sets the Distributed counter with the given value while setting expiry time too.
+     *
+     * @param key        counter key name
+     * @param value      counter value
+     * @param expiryTime expiry time in milliseconds
+     */
     public void setCounterWithExpiry(String key, long value, long expiryTime);
     /**
      * This method used to add and return the distributed counter value.
