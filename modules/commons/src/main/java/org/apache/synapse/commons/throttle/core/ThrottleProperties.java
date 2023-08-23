@@ -37,7 +37,7 @@ public class ThrottleProperties implements Serializable {
 	private String distributedCounterType = ThrottleConstants.HAZELCAST;
 	private boolean throttleSyncAsyncHybridModeEnabled = false;
 	private String distributedThrottleProcessorType = "hybrid";
-	private String hybridThrottleProcessorWindowType;
+	private String hybridThrottleProcessorWindowType = "start_time_based";
 
 	public String getWindowReplicatorPoolSize() {
 		return windowReplicatorPoolSize;
