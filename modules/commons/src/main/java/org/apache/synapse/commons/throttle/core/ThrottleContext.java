@@ -22,7 +22,6 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.commons.throttle.core.factory.ThrottleContextFactory;
-import org.apache.synapse.commons.throttle.core.internal.ThrottleServiceDataHolder;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

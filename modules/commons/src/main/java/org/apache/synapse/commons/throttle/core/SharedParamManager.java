@@ -13,6 +13,9 @@ public class SharedParamManager {
 	private static Map<String, Long> timestamps = new ConcurrentHashMap<String, Long>();//Locally managed time stamps map for non clustered environment
 	private static Log log = LogFactory.getLog(SharedParamManager.class.getName());
 
+	private SharedParamManager() {
+	}
+
 	/**
 	 * Return distributed shared counter for this caller context with given id. If it's not distributed will get from the
 	 * local counter
