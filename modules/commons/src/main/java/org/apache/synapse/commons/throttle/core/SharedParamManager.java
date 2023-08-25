@@ -317,15 +317,15 @@ public class SharedParamManager {
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
-			long responseCode;
+			boolean lockAcquired;
 			// key of the lock tried to acquire. i.e. "lock-/pizzashack/1.0.0:1.0.0:PRODUCTION"
 			String lockKey = ThrottleConstants.THROTTLE_LOCK_KEY_PREFIX + callerContextId;
 			long startTime = System.currentTimeMillis();
 			do {
-				responseCode = distributedCounterManager.setLockWithExpiry(lockKey, lockValue, System.currentTimeMillis() +
+				lockAcquired = distributedCounterManager.setLockWithExpiry(lockKey, lockValue, System.currentTimeMillis() +
 					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
 
-				if (responseCode == 1) {
+				if (lockAcquired) {
 					// lock acquired
 					if (log.isTraceEnabled()) {
 						long timeNow = System.currentTimeMillis();
@@ -335,7 +335,7 @@ public class SharedParamManager {
 								+ Thread.currentThread().getId());
 					}
 					return true;
-				} else if (responseCode == 0) {
+				} else {
 					long time = System.currentTimeMillis();
 					long timeElapsed = time - startTime;
 					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
@@ -358,7 +358,7 @@ public class SharedParamManager {
 						throw new RuntimeException(e);
 					}
 				}
-			} while (responseCode == 0);
+			} while (true);
 		}
 		return true;
 	}
