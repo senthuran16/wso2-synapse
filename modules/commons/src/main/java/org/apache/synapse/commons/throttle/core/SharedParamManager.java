@@ -363,14 +363,18 @@ public class SharedParamManager {
 		return true;
 	}
 
-	// no need to check the value before removal
+	/**
+	 * Release the lock of the given callerContext
+	 */
 	public static void releaseSharedKeys(String callerContextId) {
-		DistributedCounterManager distributedCounterManager =
-				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
+		DistributedCounterManager distributedCounterManager = ThrottleServiceDataHolder.getInstance()
+				.getDistributedCounterManager();
 
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
 			distributedCounterManager.removeLock(callerContextId);
-			log.trace("current time:" + System.currentTimeMillis() + "(" + ThrottleUtil.getReadableTime(System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+			log.trace("current time:" + System.currentTimeMillis() + "(" + ThrottleUtil.getReadableTime(
+					System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: "
+					+ Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 		}
 	}
 }
