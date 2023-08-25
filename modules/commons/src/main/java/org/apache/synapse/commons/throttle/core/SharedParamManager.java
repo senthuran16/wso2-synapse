@@ -315,9 +315,11 @@ public class SharedParamManager {
 
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
 			long responseCode;
+			// key of the lock tried to acquire. i.e. "lock-/pizzashack/1.0.0:1.0.0:PRODUCTION"
+			String lockKey = ThrottleConstants.THROTTLE_LOCK_KEY_PREFIX + callerContextId;
 			long startTime = System.currentTimeMillis();
 			do {
-				responseCode = distributedCounterManager.setLockWithExpiry(callerContextId, lockValue, System.currentTimeMillis() +
+				responseCode = distributedCounterManager.setLockWithExpiry(lockKey, lockValue, System.currentTimeMillis() +
 					                                                 distributedCounterManager.getKeyLockRetrievalTimeout() * 2);
 
 				if (responseCode == 1) {
@@ -325,7 +327,7 @@ public class SharedParamManager {
 					if (log.isTraceEnabled()) {
 						long timeNow = System.currentTimeMillis();
 						log.trace("current time:" + timeNow + "(" + ThrottleUtil.getReadableTime(timeNow) + ")"
-								+ "Lock acquired for key: " + callerContextId + " within " + (timeNow - startTime)
+								+ "Lock acquired for key: " + lockKey + " within " + (timeNow - startTime)
 								+ " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: "
 								+ Thread.currentThread().getId());
 					}
@@ -335,7 +337,7 @@ public class SharedParamManager {
 					long timeElapsed = time - startTime;
 					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
 						log.warn("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")" + " Unable to"
-								+ " acquire lock for key: " + callerContextId + " within the configured "
+								+ " acquire lock for key: " + lockKey + " within the configured "
 								+ "timeout period. Elapsed time: " + timeElapsed + " ms" + " Thread name: "
 								+ Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
 						return false;
@@ -345,7 +347,7 @@ public class SharedParamManager {
 						Thread.sleep(5);
 						if (log.isTraceEnabled()) {
 							log.trace("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")"
-									+ "Retrying to get lock for key: " + callerContextId + " Thread name: "
+									+ "Retrying to get lock for key: " + lockKey + " Thread name: "
 									+ Thread.currentThread().getName() + " Thread id: " + Thread.currentThread()
 									.getId());
 						}
