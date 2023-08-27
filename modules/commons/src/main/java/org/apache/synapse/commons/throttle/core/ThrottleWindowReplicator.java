@@ -55,8 +55,10 @@ private ThrottleProperties throttleProperties;
 		}
 
 		if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-			log.debug("Throttle Sync Async Hybrid Mode is enabled. So throttle window replicator task will not be "
-					+ "scheduled.");
+			if (log.isDebugEnabled()) {
+				log.debug("Throttle Sync Async Hybrid Mode is enabled. So throttle window replicator task will not be "
+						+ "scheduled.");
+			}
 			return;
 		}
 

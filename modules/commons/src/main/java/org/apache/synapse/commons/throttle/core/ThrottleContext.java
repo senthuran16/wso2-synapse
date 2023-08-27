@@ -386,8 +386,8 @@ public abstract class ThrottleContext {
      */
     public void removeAndDestroyShareParamsOfCaller(String id) {
         if (id != null) {
-            if(log.isDebugEnabled()) {
-                log.info("REMOVE AND DESTROY OF SHARED PARAM OF CALLER WITH ID " + id);
+            if (log.isDebugEnabled()) {
+                log.debug("REMOVE AND DESTROY OF SHARED PARAM OF CALLER WITH ID " + id);
             }
             removeCaller(id);
             SharedParamManager.removeTimestamp(id);

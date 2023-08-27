@@ -281,9 +281,13 @@ public class SharedParamManager {
 		DistributedCounterManager distributedCounterManager =
 				ThrottleServiceDataHolder.getInstance().getDistributedCounterManager();
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
-			log.trace("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
+			if (log.isTraceEnabled()) {
+				log.trace("Setting expiry time for key:" + sharedCounterKey + " value: " + expiryTimeStamp);
+			}
 			distributedCounterManager.setExpiry(sharedCounterKey, expiryTimeStamp);
-			log.trace("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
+			if (log.isTraceEnabled()) {
+				log.trace("Setting expiry time for key:" + sharedTimeStampKey + " value: " + expiryTimeStamp);
+			}
 			distributedCounterManager.setExpiry(sharedTimeStampKey, expiryTimeStamp);
 
 		}
@@ -331,8 +335,7 @@ public class SharedParamManager {
 						long timeNow = System.currentTimeMillis();
 						log.trace("current time:" + timeNow + "(" + ThrottleUtil.getReadableTime(timeNow) + ")"
 								+ "Lock acquired for key: " + lockKey + " within " + (timeNow - startTime)
-								+ " ms" + " Thread name: " + Thread.currentThread().getName() + " Thread id: "
-								+ Thread.currentThread().getId());
+								+ " ms");
 					}
 					return true;
 				} else {
@@ -341,8 +344,7 @@ public class SharedParamManager {
 					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
 						log.warn("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")" + " Unable to"
 								+ " acquire lock for key: " + lockKey + " within the configured "
-								+ "timeout period. Elapsed time: " + timeElapsed + " ms" + " Thread name: "
-								+ Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+								+ "timeout period. Elapsed time: " + timeElapsed + " ms");
 						return false;
 					}
 
@@ -350,9 +352,7 @@ public class SharedParamManager {
 						Thread.sleep(5);
 						if (log.isTraceEnabled()) {
 							log.trace("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")"
-									+ "Retrying to get lock for key: " + lockKey + " Thread name: "
-									+ Thread.currentThread().getName() + " Thread id: " + Thread.currentThread()
-									.getId());
+									+ "Retrying to get lock for key: " + lockKey);
 						}
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
@@ -372,9 +372,10 @@ public class SharedParamManager {
 
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
 			distributedCounterManager.removeLock(callerContextId);
-			log.trace("current time:" + System.currentTimeMillis() + "(" + ThrottleUtil.getReadableTime(
-					System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId + " Thread name: "
-					+ Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+			if (log.isTraceEnabled()) {
+				log.trace("Current time:" + System.currentTimeMillis() + "(" + ThrottleUtil.getReadableTime(
+						System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId);
+			}
 		}
 	}
 }

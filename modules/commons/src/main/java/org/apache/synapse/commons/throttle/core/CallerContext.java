@@ -394,8 +394,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
         // if unit time period (session time) is not over
         if (log.isDebugEnabled()) {
             log.debug("\n\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime +
-                    " (" + ThrottleUtil.getReadableTime(currentTime) + ") " + " Thread name: " + Thread.currentThread().getName()
-                    + " Thread id: " + Thread.currentThread().getId());
+                    " (" + ThrottleUtil.getReadableTime(currentTime) + ") ");
         }
 
         DistributedThrottleProcessor distributedThrottleProcessor = ThrottleServiceDataHolder.getInstance()
@@ -405,8 +404,9 @@ public abstract class CallerContext implements Serializable, Cloneable {
             canAccess = distributedThrottleProcessor.canAccessBasedOnUnitTime(this, configuration, throttleContext,
                     requestContext);
             long duration = System.currentTimeMillis() - startTime;
-            log.debug("LATENCY FOR THROTTLE PROCESSING: " + duration + " ms" + " Thread name: " + Thread.currentThread()
-                    .getName() + " Thread id: " + Thread.currentThread().getId());
+            if (log.isDebugEnabled()) {
+                log.debug("LATENCY FOR THROTTLE PROCESSING: " + duration + " ms");
+            }
         } else {
             canAccess = canAccessBasedOnUnitTime(configuration, throttleContext, currentTime);
         }
@@ -448,9 +448,10 @@ public abstract class CallerContext implements Serializable, Cloneable {
     }
 
     public void setLocalCounter(long counter) {
-        log.trace(">>> changing local counter from:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
+        if (log.isTraceEnabled()) {
+            log.trace("changing local counter from:" + localCount.get() + " to:" + counter);
+        }
         localCount.set(counter);
-        log.trace(">>> changing local counter to:" + localCount.get() + " Thread name: " + Thread.currentThread().getName() + " Thread id: " + Thread.currentThread().getId());
     }
 
     public long getLocalCounter() {

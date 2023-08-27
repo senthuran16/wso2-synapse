@@ -47,9 +47,14 @@ public class ThrottleReplicator {
         throttleProperties = ThrottleServiceDataHolder.getInstance().getThrottleProperties();
         replicatorPoolSize = Integer.parseInt(throttleProperties.getThrottlingPoolSize());
 
-        log.debug("Replicator pool size set to " + replicatorPoolSize);
+        if (log.isDebugEnabled()) {
+            log.debug("Replicator pool size set to " + replicatorPoolSize);
+        }
         if (ThrottleServiceDataHolder.getInstance().getThrottleProperties().isThrottleSyncAsyncHybridModeEnabled()) {
-            log.debug("Throttle Sync Async Hybrid Mode is enabled. So throttle replicator task will not be scheduled.");
+            if (log.isDebugEnabled()) {
+                log.debug(
+                        "Throttle Sync Async Hybrid Mode is enabled. So throttle replicator task will not be scheduled.");
+            }
             return;
         }
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(replicatorPoolSize,
