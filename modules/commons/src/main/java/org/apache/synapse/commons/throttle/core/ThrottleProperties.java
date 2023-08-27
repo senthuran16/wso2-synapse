@@ -38,6 +38,7 @@ public class ThrottleProperties implements Serializable {
 	private boolean throttleSyncAsyncHybridModeEnabled = false;
 	private String distributedThrottleProcessorType = "hybrid";
 	private String hybridThrottleProcessorWindowType = "start_time_based";
+	private String localQuotaBufferPercentage = "20";
 
 	public String getWindowReplicatorPoolSize() {
 		return windowReplicatorPoolSize;
@@ -183,5 +184,13 @@ public class ThrottleProperties implements Serializable {
 
 	public String getHybridThrottleProcessorWindowType() {
 		return hybridThrottleProcessorWindowType;
+	}
+
+	public void setLocalQuotaBufferPercentage(String localQuotaBufferPercentage) {
+		this.localQuotaBufferPercentage = localQuotaBufferPercentage;
+	}
+
+	public String getLocalQuotaBufferPercentage() {
+		return localQuotaBufferPercentage;
 	}
 }

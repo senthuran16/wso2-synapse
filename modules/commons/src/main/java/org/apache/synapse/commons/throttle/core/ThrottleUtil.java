@@ -175,6 +175,12 @@ public class ThrottleUtil {
 							throttleProperties.setHybridThrottleProcessorWindowType(hybridThrottleProcessorWindowType);
 						}
 					}
+					if (key.contains(ThrottleConstants.LOCAL_QUOTA_BUFFER_PERCENTAGE)) {
+						String localQuotaBufferPercentage = properties.getProperty(key);
+						if (StringUtils.isNotEmpty(localQuotaBufferPercentage)) {
+							throttleProperties.setLocalQuotaBufferPercentage(localQuotaBufferPercentage);
+						}
+					}
 				}
 			} catch (IOException e) {
 				log.debug("Setting the Default Throttle Properties");
