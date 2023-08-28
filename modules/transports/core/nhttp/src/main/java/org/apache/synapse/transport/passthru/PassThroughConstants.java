@@ -96,7 +96,7 @@ public class PassThroughConstants {
             "PASS_THROUGH_SOURCE_CONFIGURATION";
     public static final String PASS_THROUGH_SOURCE_CONNECTION = "pass-through.Source-Connection";
     protected static final String PASS_THROUGH_SOURCE_REQUEST = "pass-through.Source-Request";
-
+    protected static final String PASS_THROUGH_TARGET_CONFIGURATION = "PASS_THROUGH_TARGET_CONFIGURATION";
     protected static final String PASS_THROUGH_TARGET_CONNECTION = "pass-through.Target-Connection";
     protected static final String PASS_THROUGH_TARGET_RESPONSE = "pass-through.Target-Response";
 
@@ -121,7 +121,7 @@ public class PassThroughConstants {
     public static final String CLONE_PASS_THROUGH_PIPE_REQUEST = "clone_pass-through.pipe_connected";
 
     public static final String CONNECTION_LIMIT_EXCEEDS = "CONNECTION_LIMIT_EXCEEDS";
-    
+
     /**
      * Name of the .mar file
      */
@@ -148,6 +148,7 @@ public class PassThroughConstants {
 
     public static final String REQ_FROM_CLIENT_READ_START_TIME = "REQ_FROM_CLIENT_READ_START_TIME";
     public static final String REQ_FROM_CLIENT_READ_END_TIME = "REQ_FROM_CLIENT_READ_END_TIME";
+    public static final String REQ_FROM_CLIENT_BODY_READ_START_TIME = "REQ_FROM_CLIENT_BODY_READ_START_TIME";
 
     public static final String REQ_TO_BACKEND_WRITE_START_TIME = "REQ_TO_BACKEND_WRITE_START_TIME";
     public static final String REQ_TO_BACKEND_WRITE_END_TIME = "REQ_TO_BACKEND_WRITE_END_TIME";
@@ -157,6 +158,7 @@ public class PassThroughConstants {
 
     public static final String RES_TO_CLIENT_WRITE_START_TIME = "RES_TO_CLIENT_WRITE_START_TIME";
     public static final String RES_TO_CLIENT_WRITE_END_TIME = "RES_TO_CLIENT_WRITE_END_TIME";
+    public static final String RES_TO_CLIENT_BODY_WRITE_START_TIME = "RES_TO_CLIENT_BODY_WRITE_START_TIME";
 
     public static final String SERVER_WORKER_INIT_TIME = "SERVER_WORKER_INIT_TIME";
     public static final String SERVER_WORKER_START_TIME = "SERVER_WORKER_START_TIME";
@@ -164,6 +166,10 @@ public class PassThroughConstants {
     public static final String CLIENT_WORKER_INIT_TIME = "CLIENT_WORKER_INIT_TIME";
     public static final String CLIENT_WORKER_START_TIME = "CLIENT_WORKER_START_TIME";
 
+    public static final String SERVER_WORKER_REFERENCE = "SERVER_WORKER_REFERENCE";
+
+    public static final String CLIENT_WORKER_REFERENCE = "CLIENT_WORKER_REFERENCE";
+    public static final String MESSAGE_DISCARD_WORKER_REFERENCE = "MESSAGE_DISCARD_WORKER_REFERENCE";
     public static final String SYNAPSE_PASSTHROUGH_LATENCY_ADVANCE_VIEW = "synapse.passthrough.latency_view.enable_advanced_view";
     public static final String SYNAPSE_PASSTHROUGH_S2SLATENCY_ADVANCE_VIEW = "synapse.passthrough.s2slatency_view.enable_advanced_view";
     public static final String PASSTHROUGH_LATENCY_VIEW = "PassthroughLatencyView";
@@ -259,4 +265,5 @@ public class PassThroughConstants {
     public static final String CORRELATION_LOGGER = "correlation";
     //default header that carries the correlation ID. Header name is configurable at passthru-http.properties
     public static final String CORRELATION_DEFAULT_HEADER = "activityid";
+    public static final String TRANSPORT_LATENCY_LOGGER = "transport-latency";
 }

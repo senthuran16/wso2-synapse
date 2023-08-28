@@ -41,6 +41,7 @@ import org.apache.synapse.commons.util.ext.TenantInfoInitiatorProvider;
 import org.apache.synapse.transport.customlogsetter.CustomLogSetter;
 import org.apache.synapse.transport.http.conn.SynapseDebugInfoHolder;
 import org.apache.synapse.transport.nhttp.NhttpConstants;
+import org.apache.synapse.transport.passthru.config.PassThroughConfiguration;
 import org.apache.synapse.transport.passthru.config.TargetConfiguration;
 import org.apache.synapse.transport.passthru.util.RelayUtils;
 
@@ -66,12 +67,20 @@ public class ClientWorker implements Runnable {
     /** the axis2 message context of the request */
     private MessageContext requestMessageContext;
 
+    private Long queuedTime = null;
+
+    private PassThroughConfiguration conf = PassThroughConfiguration.getInstance();
+
+    private WorkerState state;
+
     public ClientWorker(TargetConfiguration targetConfiguration, MessageContext outMsgCtx, TargetResponse response) {
         this(targetConfiguration, outMsgCtx, response, Collections.emptyList());
     }
 
     public ClientWorker(TargetConfiguration targetConfiguration, MessageContext outMsgCtx, TargetResponse response,
                         List<String> allowedResponseProperties) {
+        this.state = WorkerState.CREATED;
+        this.queuedTime = System.currentTimeMillis();
         this.targetConfiguration = targetConfiguration;
         this.response = response;
         this.expectEntityBody = response.isExpectResponseBody();
@@ -148,6 +157,8 @@ public class ClientWorker implements Runnable {
                 outMsgCtx.getProperty(PassThroughConstants.PASS_THROUGH_SOURCE_CONFIGURATION));
         responseMsgCtx.setProperty(AddressingConstants.DISABLE_ADDRESSING_FOR_IN_MESSAGES,
                 outMsgCtx.getProperty(AddressingConstants.DISABLE_ADDRESSING_FOR_IN_MESSAGES));
+        responseMsgCtx.setProperty(PassThroughConstants.INTERNAL_EXCEPTION_ORIGIN,
+                outMsgCtx.getProperty(PassThroughConstants.INTERNAL_EXCEPTION_ORIGIN));
 
         responseMsgCtx.setServerSide(true);
         responseMsgCtx.setDoingREST(outMsgCtx.isDoingREST());
@@ -170,6 +181,9 @@ public class ClientWorker implements Runnable {
         });
 
         for (Map.Entry<String, String> headerEntry : headerEntries) {
+            if (headerMap.containsKey(headerEntry.getKey())) {
+                excessHeaders.put(headerEntry.getKey(), headerMap.get(headerEntry.getKey()));
+            }
             headerMap.put(headerEntry.getKey(), headerEntry.getValue());
         }
         responseMsgCtx.setProperty(MessageContext.TRANSPORT_HEADERS, headerMap);
@@ -231,16 +245,36 @@ public class ClientWorker implements Runnable {
             cleanup();
             return;
         }
+        // Mark the start of the request at the beginning of the worker thread
+        setWorkerState(WorkerState.RUNNING);
+
+        Long expectedMaxQueueingTime = conf.getExpectedMaxQueueingTime();
+        if (queuedTime != null && expectedMaxQueueingTime != null) {
+            Long clientWorkerQueuedTime = System.currentTimeMillis() - queuedTime;
+            if (clientWorkerQueuedTime >= expectedMaxQueueingTime) {
+                log.warn("Client worker thread queued time exceeds the expected max queueing time. Expected max "
+                        + "queueing time : " + expectedMaxQueueingTime + "ms. Actual queued time : "
+                        + clientWorkerQueuedTime + "ms"+ ", CORRELATION_ID : "
+                        + requestMessageContext.getProperty(CorrelationConstants.CORRELATION_ID));
+            }
+
+        }
+
         if (responseMsgCtx.getProperty(PassThroughConstants.PASS_THROUGH_SOURCE_CONNECTION) != null) {
             ((NHttpServerConnection) responseMsgCtx.getProperty(PassThroughConstants.PASS_THROUGH_SOURCE_CONNECTION)).
                        getContext().setAttribute(PassThroughConstants.CLIENT_WORKER_START_TIME, System.currentTimeMillis());
         }
-        try {
-            // If an error has happened in the request processing, consumes the data in pipe completely and discard it
-            if (response.isForceShutdownConnectionOnComplete()) {
-                RelayUtils.discardRequestMessage(requestMessageContext);
-            }
 
+        if (response.isForceShutdownConnectionOnComplete() && !conf.isConsumeAndDiscardBySecondaryWorkerPool()
+                && conf.isConsumeAndDiscard()) {
+            // If an error has happened in the request processing, consumes the data in pipe completely and discard it
+            try {
+                RelayUtils.discardRequestMessage(requestMessageContext);
+            } catch (AxisFault af) {
+                log.error("Fault discarding request message", af);
+            }
+        }
+        try {
             if (expectEntityBody) {
             	  String cType = response.getHeader(HTTP.CONTENT_TYPE);
                   if(cType == null){
@@ -324,6 +358,7 @@ public class ClientWorker implements Runnable {
             log.error("Fault creating response SOAP envelope", af);            
         } finally {
             cleanup();
+            setWorkerState(WorkerState.FINISHED);
         }
     }
 
@@ -393,6 +428,14 @@ public class ClientWorker implements Runnable {
 
         // Unable to determine the content type - Return default value
         return PassThroughConstants.DEFAULT_CONTENT_TYPE;
+    }
+
+    private void setWorkerState(WorkerState workerState) {
+        this.state = workerState;
+    }
+
+    public WorkerState getWorkerState() {
+        return this.state;
     }
 
     /**

@@ -1,4 +1,4 @@
-<!--
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--
 ~ Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 ~
 ~ WSO2 Inc. licenses this file to you under the Apache License,
@@ -14,13 +14,12 @@
 ~ KIND, either express or implied. See the License for the
 ~ specific language governing permissions and limitations
 ~ under the License.
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
         <artifactId>synapse-features</artifactId>
         <groupId>org.apache.synapse</groupId>
-        <version>4.0.0-wso2v20</version>
+        <version>4.0.0-wso2v20.17-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -64,7 +63,7 @@
             <artifactId>wso2caching-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.jayway.jsonpath</groupId>
+            <groupId>org.wso2.orbit.com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
         </dependency>
         <dependency>
@@ -145,7 +144,7 @@
                                 <bundleDef>com.google.code.gson:gson:${com.google.code.gson.version}</bundleDef>
                                 <bundleDef>org.wso2.caching:wso2caching-core</bundleDef>
                                 <bundleDef>com.damnhandy.wso2:handy-uri-templates</bundleDef>
-                                <bundleDef>com.jayway.jsonpath:json-path</bundleDef>
+                                <bundleDef>org.wso2.orbit.com.jayway.jsonpath:json-path</bundleDef>
                                 <bundleDef>net.minidev:json-smart</bundleDef>
                                 <bundleDef>net.minidev:accessors-smart:${net.minidev.accessors-smart.version}
                                 </bundleDef>

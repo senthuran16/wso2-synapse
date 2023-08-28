@@ -106,11 +106,17 @@ public class ServerWorker implements Runnable {
     
     /** Weather we should do rest dispatching or not */
     private boolean isRestDispatching = true;
+
+    private PassThroughConfiguration conf = PassThroughConfiguration.getInstance();
     
     private OutputStream os; //only used for WSDL  requests..
-  
+
+    private Long queuedTime = null;
+private WorkerState state;
+
     public ServerWorker(final SourceRequest request,
                         final SourceConfiguration sourceConfiguration,final OutputStream os) {
+        this.state = WorkerState.CREATED;
         this.request = request;
         this.sourceConfiguration = sourceConfiguration;
 
@@ -132,6 +138,7 @@ public class ServerWorker implements Runnable {
         request.getConnection().getContext().setAttribute(NhttpConstants.SERVER_WORKER_INIT_TIME,
                 System.currentTimeMillis());
         request.getConnection().getContext().setAttribute(PassThroughConstants.REQUEST_MESSAGE_CONTEXT, msgContext);
+        queuedTime = System.currentTimeMillis();
     }
 
     public ServerWorker(final SourceRequest request,
@@ -144,15 +151,28 @@ public class ServerWorker implements Runnable {
 
     public void run() {
         try {
+            // Mark the start of the request at the beginning of the worker thread
+            setWorkerState(WorkerState.RUNNING);
+
+            Long expectedMaxQueueingTime = conf.getExpectedMaxQueueingTime();
+            if (queuedTime != null && expectedMaxQueueingTime != null) {
+                Long serverWorkerQueuedTime = System.currentTimeMillis() - queuedTime;
+                if (serverWorkerQueuedTime >= expectedMaxQueueingTime) {
+                    log.warn("Server worker thread queued time exceeds the expected max queueing time. Expected max " +
+                            "queueing time : " + expectedMaxQueueingTime + "ms. Actual queued time : " +
+                            serverWorkerQueuedTime + "ms" + ", CORRELATION_ID : " + correlationId);
+                }
+
+            }
              /* Remove correlation id MDC thread local value that can be persisting from the
                previous usage of this thread */
             ThreadContext.remove(CorrelationConstants.CORRELATION_MDC_PROPERTY);
             /* Subsequent to removing the correlation id MDC thread local value, a new value is put in case
                there is one */
-            if (PassThroughCorrelationConfigDataHolder.isEnable() && StringUtils.isNotEmpty(correlationId)) {
+            if (StringUtils.isNotEmpty(correlationId)) {
                 ThreadContext.put(CorrelationConstants.CORRELATION_MDC_PROPERTY, correlationId);
                 /* Log the time taken to switch from the previous thread to this thread */
-                if (initiationTimestamp != 0) {
+                if (PassThroughCorrelationConfigDataHolder.isEnable() && initiationTimestamp != 0) {
                     correlationLog.info((System.currentTimeMillis() - initiationTimestamp) +
                             "|Thread switch latency");
                 }
@@ -615,6 +635,14 @@ public class ServerWorker implements Runnable {
         msgContext.setProperty(PassThroughConstants.TRANSPORT_MESSAGE_HANDLER, new PassThroughMessageHandler());
 
         return msgContext;
+    }
+
+    private void setWorkerState(WorkerState workerState) {
+        this.state = workerState;
+    }
+
+    public WorkerState getWorkerState() {
+        return this.state;
     }
 
     private void handleException(String msg, Exception e) {
