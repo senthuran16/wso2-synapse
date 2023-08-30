@@ -333,26 +333,24 @@ public class SharedParamManager {
 					// lock acquired
 					if (log.isTraceEnabled()) {
 						long timeNow = System.currentTimeMillis();
-						log.trace("current time:" + timeNow + "(" + ThrottleUtil.getReadableTime(timeNow) + ")"
-								+ "Lock acquired for key: " + lockKey + " within " + (timeNow - startTime)
-								+ " ms");
+						log.trace(
+								"current time:" + timeNow + "Lock acquired for key: " + lockKey + " within " + (timeNow
+										- startTime) + " ms");
 					}
 					return true;
 				} else {
 					long time = System.currentTimeMillis();
 					long timeElapsed = time - startTime;
 					if (timeElapsed > distributedCounterManager.getKeyLockRetrievalTimeout()) {
-						log.warn("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")" + " Unable to"
-								+ " acquire lock for key: " + lockKey + " within the configured "
-								+ "timeout period. Elapsed time: " + timeElapsed + " ms");
+						log.warn("current time:" + time + " Unable to" + " acquire lock for key: " + lockKey
+								+ " within the configured " + "timeout period. Elapsed time: " + timeElapsed + " ms");
 						return false;
 					}
 
 					try {
 						Thread.sleep(5);
 						if (log.isTraceEnabled()) {
-							log.trace("current time:" + time + "(" + ThrottleUtil.getReadableTime(time) + ")"
-									+ "Retrying to get lock for key: " + lockKey);
+							log.trace("current time:" + time + "Retrying to get lock for key: " + lockKey);
 						}
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
@@ -373,8 +371,7 @@ public class SharedParamManager {
 		if (distributedCounterManager != null && distributedCounterManager.isEnable()) {
 			distributedCounterManager.removeLock(callerContextId);
 			if (log.isTraceEnabled()) {
-				log.trace("Current time:" + System.currentTimeMillis() + "(" + ThrottleUtil.getReadableTime(
-						System.currentTimeMillis()) + ")" + "Lock released for key: " + callerContextId);
+				log.trace("Current time:" + System.currentTimeMillis() + "Lock released for key: " + callerContextId);
 			}
 		}
 	}
