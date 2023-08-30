@@ -30,7 +30,9 @@ import javax.cache.Caching;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
@@ -160,6 +162,25 @@ public class ThrottleUtil {
 									getResolvedValue(secretResolver, distributedConfiguration));
 						}
 					}
+					if (key.contains(ThrottleConstants.THROTTLE_SYNC_ASYNC_HYBRID_MODE_ENABLED)) {
+						String throttleSyncAsyncHybridModeEnabled = properties.getProperty(key);
+						if (StringUtils.isNotEmpty(throttleSyncAsyncHybridModeEnabled)) {
+							throttleProperties.setThrottleSyncAsyncHybridModeEnabled(
+									Boolean.parseBoolean(throttleSyncAsyncHybridModeEnabled));
+						}
+					}
+					if (key.contains(ThrottleConstants.HYBRID_THROTTLE_PROCESSOR_WINDOW_TYPE)) {
+						String hybridThrottleProcessorWindowType = properties.getProperty(key);
+						if (StringUtils.isNotEmpty(hybridThrottleProcessorWindowType)) {
+							throttleProperties.setHybridThrottleProcessorWindowType(hybridThrottleProcessorWindowType);
+						}
+					}
+					if (key.contains(ThrottleConstants.LOCAL_QUOTA_BUFFER_PERCENTAGE)) {
+						String localQuotaBufferPercentage = properties.getProperty(key);
+						if (StringUtils.isNotEmpty(localQuotaBufferPercentage)) {
+							throttleProperties.setLocalQuotaBufferPercentage(localQuotaBufferPercentage);
+						}
+					}
 				}
 			} catch (IOException e) {
 				log.debug("Setting the Default Throttle Properties");
@@ -194,4 +215,17 @@ public class ThrottleUtil {
             }
             return cache;
         }
-    }
+
+	/**
+	 * Get the readable time from the given epoch timestamp
+	 *
+	 * @param time epoch time
+	 * @return Time in readable format (yyyy-MM-dd HH:mm:ss,SSS)
+	 */
+	public static String getReadableTime(long time) {
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
+		Date date = new Date(time);
+		String formattedTime = dateFormat.format(date);
+		return formattedTime;
+	}
+}
