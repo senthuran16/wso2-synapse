@@ -393,8 +393,7 @@ public abstract class CallerContext implements Serializable, Cloneable {
         }
         // if unit time period (session time) is not over
         if (log.isDebugEnabled()) {
-            log.debug("\n\n\n ### NEW REQUEST RECEIVED ! - currentTime: " + currentTime +
-                    " (" + ThrottleUtil.getReadableTime(currentTime) + ") ");
+            log.debug("### NEW REQUEST RECEIVED ! - currentTime: " + currentTime);
         }
 
         DistributedThrottleProcessor distributedThrottleProcessor = ThrottleServiceDataHolder.getInstance()
