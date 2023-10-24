@@ -37,8 +37,11 @@ import org.apache.synapse.config.Entry;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.mediators.AbstractMediator;
 import org.apache.synapse.mediators.Value;
+import org.apache.synapse.mediators.bsf.access.control.SandboxContextFactory;
 import org.apache.synapse.mediators.eip.EIPUtils;
+import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 
 import javax.activation.DataHandler;
 import javax.script.*;
@@ -175,6 +178,10 @@ public class ScriptMediator extends AbstractMediator {
      */
     private ScriptEngineFactory oracleNashornFactory;
 
+    // TODO: Get these from config
+    private static boolean shouldLimitClassAccess = true;
+    private static boolean shouldLimitNativeObjectAccess = true;
+
     /**
      * Create a script mediator for the given language and given script source.
      *
@@ -275,6 +282,12 @@ public class ScriptMediator extends AbstractMediator {
             //if the engine is Rhino then needs to set the class loader specifically
             if (language.equals("js")) {
                 Context cx = Context.enter();
+//                if (shouldInitSafeStandardObjects) {
+//                    cx.initSafeStandardObjects(); // TODO: Method not available. Not needed for now.
+//                }
+                if (shouldLimitClassAccess) {
+                    cx.setClassShutter(createClassShutter());
+                }
                 cx.setApplicationClassLoader(this.loader);
 
             }
@@ -646,6 +659,10 @@ public class ScriptMediator extends AbstractMediator {
         this.multiThreadedEngine = scriptEngine.getFactory().getParameter("THREADING") != null;
         log.debug("Script mediator for language : " + language +
                 " supports multithreading? : " + multiThreadedEngine);
+
+        if (shouldLimitNativeObjectAccess && !ContextFactory.hasExplicitGlobal()) {
+            ContextFactory.initGlobal(new SandboxContextFactory());
+        }
     }
 
     public String getLanguage() {
@@ -715,6 +732,14 @@ public class ScriptMediator extends AbstractMediator {
             return engineManager.getEngineByName(NASHORN).getFactory();
         }
         return null;
+    }
+
+    private ClassShutter createClassShutter() {
+        return new ClassShutter() {
+            public boolean visibleToScripts(String className) {
+                return !className.startsWith("java.util.ArrayList"); // TODO: This sample depicts Block listing. Add Allow listing too
+            }
+        };
     }
 
 }
