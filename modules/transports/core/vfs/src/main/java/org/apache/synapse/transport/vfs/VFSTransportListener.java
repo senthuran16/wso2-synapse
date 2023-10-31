@@ -200,8 +200,6 @@ public class VFSTransportListener extends AbstractPollingTransportListener<PollT
         if (entry.isClusterAware()) {
             boolean leader = true;
             ClusteringAgent agent = getConfigurationContext().getAxisConfiguration().getClusteringAgent();
-            log.warn("Although proxy is cluster aware, clustering config are not present, hence running the" +
-                         " the polling task in this node");
             if (!leader) {
                 if (log.isDebugEnabled()) {
                     log.debug("This Member is not the leader");
