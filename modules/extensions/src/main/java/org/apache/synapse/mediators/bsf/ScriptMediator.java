@@ -745,6 +745,12 @@ public class ScriptMediator extends AbstractMediator {
         return null;
     }
 
+    /**
+     * Creates a class shutter, which will be used inside the context that executes the script.
+     * This class shutter will be used to control the visibility of classes specified in the access control config,
+     * to the script.
+     * @return
+     */
     private ClassShutter createClassShutter() {
         return new ClassShutter() {
             public boolean visibleToScripts(String className) {
@@ -769,6 +775,10 @@ public class ScriptMediator extends AbstractMediator {
         };
     }
 
+    /**
+     * Reads and sets access control configurations.
+     * @param properties    Synapse properties.
+     */
     private void readAccessControlConfigurations(Properties properties) {
         String limitClassAccessEnabled = properties.getProperty(LIMIT_CLASS_ACCESS_PREFIX + ENABLE);
         if (Boolean.parseBoolean(limitClassAccessEnabled)) {
