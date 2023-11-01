@@ -669,7 +669,7 @@ public class ScriptMediator extends AbstractMediator {
         log.debug("Script mediator for language : " + language +
                 " supports multithreading? : " + multiThreadedEngine);
 
-        setAccessControls(MiscellaneousUtil.loadProperties("synapse.properties"));
+        readAccessControlConfigurations(MiscellaneousUtil.loadProperties("synapse.properties"));
         if (nativeObjectAccessControlConfig != null && nativeObjectAccessControlConfig.isAccessControlEnabled() &&
                 !ContextFactory.hasExplicitGlobal()) {
             ContextFactory.initGlobal(new SandboxContextFactory(nativeObjectAccessControlConfig));
@@ -748,6 +748,10 @@ public class ScriptMediator extends AbstractMediator {
     private ClassShutter createClassShutter() {
         return new ClassShutter() {
             public boolean visibleToScripts(String className) {
+                /*
+                This will be used to compare whether the current fully qualified class name starts with
+                any of the provided set of strings provided in the access control config.
+                */
                 Comparator<String> startsWithComparator = new Comparator<String>() {
                     @Override
                     public int compare(String o1, String o2) {
@@ -765,7 +769,7 @@ public class ScriptMediator extends AbstractMediator {
         };
     }
 
-    private void setAccessControls(Properties properties) {
+    private void readAccessControlConfigurations(Properties properties) {
         String limitClassAccessEnabled = properties.getProperty(LIMIT_CLASS_ACCESS_PREFIX + ENABLE);
         if (Boolean.parseBoolean(limitClassAccessEnabled)) {
             String limitClassAccessListType = properties.getProperty(LIMIT_CLASS_ACCESS_PREFIX + LIST_TYPE);
@@ -777,8 +781,10 @@ public class ScriptMediator extends AbstractMediator {
 
         String limitNativeObjectAccessEnabled = properties.getProperty(LIMIT_NATIVE_OBJECT_ACCESS_PREFIX + ENABLE);
         if (Boolean.parseBoolean(limitNativeObjectAccessEnabled)) {
-            String limitNativeObjectAccessListType = properties.getProperty(LIMIT_NATIVE_OBJECT_ACCESS_PREFIX + LIST_TYPE);
-            String limitNativeObjectAccessClassPrefixes = properties.getProperty(LIMIT_NATIVE_OBJECT_ACCESS_PREFIX + OBJECT_NAMES);
+            String limitNativeObjectAccessListType =
+                    properties.getProperty(LIMIT_NATIVE_OBJECT_ACCESS_PREFIX + LIST_TYPE);
+            String limitNativeObjectAccessClassPrefixes =
+                    properties.getProperty(LIMIT_NATIVE_OBJECT_ACCESS_PREFIX + OBJECT_NAMES);
             this.nativeObjectAccessControlConfig = new AccessControlConfig(true,
                     AccessControlListType.valueOf(limitNativeObjectAccessListType),
                     Arrays.asList(limitNativeObjectAccessClassPrefixes.split(",")));

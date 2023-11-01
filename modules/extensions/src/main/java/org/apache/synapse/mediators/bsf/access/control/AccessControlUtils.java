@@ -28,7 +28,18 @@ import java.util.List;
  */
 public class AccessControlUtils {
 
-    public static boolean isAccessAllowed(String string, AccessControlConfig accessControlConfig, Comparator<String> comparator) {
+    /**
+     * Returns whether the provided string which represents a Java class or native object is accessible or not.
+     * The allowing/blocking will be determined by the provided AccessControlConfig, based on the matching/comparing
+     * done as specified in the comparator.
+     * @param string                Java class name or native object name.
+     * @param accessControlConfig   Access control config of the Script Mediator.
+     * @param comparator            The comparator based on which, the provided Java class/native object name is
+     *                              matched against the provided access control config.
+     * @return                      Whether the access is allowed or not.
+     */
+    public static boolean isAccessAllowed(String string, AccessControlConfig accessControlConfig,
+                                          Comparator<String> comparator) {
         if (accessControlConfig == null || !accessControlConfig.isAccessControlEnabled()) {
             return true; // Access control is not applicable
         }

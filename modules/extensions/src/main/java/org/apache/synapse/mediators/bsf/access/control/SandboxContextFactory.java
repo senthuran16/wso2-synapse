@@ -22,7 +22,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 
 /**
- * Represents the sandbox context factory - which is used for access control logic for the Script Mediator.
+ * Represents the sandbox context factory - which is used with access control of the Script Mediator.
  */
 public class SandboxContextFactory extends ContextFactory {
     private AccessControlConfig nativeObjectAccessControlConfig;
