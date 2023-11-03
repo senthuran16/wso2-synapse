@@ -120,3 +120,4 @@ public class JaegerTelemetryManager implements OpenTelemetryManager {
         return this.handler;
     }
 }
+
