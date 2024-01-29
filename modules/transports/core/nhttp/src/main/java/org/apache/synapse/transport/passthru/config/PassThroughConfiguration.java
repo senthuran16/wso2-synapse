@@ -69,6 +69,9 @@ public class PassThroughConfiguration {
     /** Reverse proxy mode is enabled or not */
     private Boolean reverseProxyMode = null;
 
+    /** Enables graceful termination for TLS connection */
+    private Boolean isTLSGracefulConnectionTerminationEnabled = null;
+
     /** Default Synapse service name */
     private String passThroughDefaultServiceName = null;
 
@@ -143,6 +146,14 @@ public class PassThroughConfiguration {
                             false, props);
         }
         return isKeepAliveDisabled;
+    }
+
+    public boolean isTLSGracefulConnectionTerminationEnabled() {
+        if (isTLSGracefulConnectionTerminationEnabled == null) {
+            isTLSGracefulConnectionTerminationEnabled = getBooleanProperty(
+                    PassThroughConfigPNames.TLS_GRACEFUL_CONNECTION_TERMINATION, true);
+        }
+        return isTLSGracefulConnectionTerminationEnabled;
     }
 
     public boolean isConsumeAndDiscard() {
