@@ -177,4 +177,10 @@ public interface PassThroughConfigPNames {
      */
     public String EXPECTED_MAX_QUEUEING_TIME_FOR_MESSAGE_DISCARD_WORKER
             = "expected_max_queueing_time_for_message_discard_worker";
+
+    /**
+     * Defines whether TransportHandler and SourceHandler has to enable/disable TLS graceful connection termination
+     */
+    public String TLS_GRACEFUL_CONNECTION_TERMINATION = "tls_graceful_connection_termination";
+
 }
