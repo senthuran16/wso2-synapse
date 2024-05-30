@@ -24,9 +24,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.ManagedLifecycle;
 import org.apache.synapse.SynapseException;
+import org.apache.synapse.aspects.AspectConfigurable;
+import org.apache.synapse.aspects.AspectConfiguration;
+import org.apache.synapse.aspects.ComponentType;
+import org.apache.synapse.aspects.flow.statistics.StatisticIdentityGenerator;
+import org.apache.synapse.aspects.flow.statistics.data.artifact.ArtifactHolder;
 import org.apache.synapse.commons.util.PropertyHelper;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.startup.AbstractStartup;
+import org.apache.synapse.startup.tasks.MessageInjector;
 import org.apache.synapse.task.SynapseTaskManager;
 import org.apache.synapse.task.Task;
 import org.apache.synapse.task.TaskConstants;
@@ -43,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class StartUpController extends AbstractStartup {
+public class StartUpController extends AbstractStartup implements AspectConfigurable {
     private static final Log logger = LogFactory.getLog(StartUpController.class.getName());
 
     private SynapseEnvironment synapseEnvironment;
@@ -51,6 +57,8 @@ public class StartUpController extends AbstractStartup {
     private TaskDescription taskDescription;
 
     private SynapseTaskManager synapseTaskManager;
+
+    private AspectConfiguration aspectConfiguration;
 
     private Object task = null;
 
@@ -135,7 +143,9 @@ public class StartUpController extends AbstractStartup {
     }
 
     private void initializeTask(SynapseEnvironment synapseEnvironment) {
-        if (task instanceof ManagedLifecycle) {
+        if (task instanceof MessageInjector) {
+            ((MessageInjector) task).init(synapseEnvironment, this.getName());
+        } else if (task instanceof ManagedLifecycle) {
             ((ManagedLifecycle) task).init(synapseEnvironment);
         }
     }
@@ -249,5 +259,24 @@ public class StartUpController extends AbstractStartup {
 
     public void setTaskDescription(TaskDescription taskDescription) {
         this.taskDescription = taskDescription;
+    }
+
+    @Override
+    public void configure(AspectConfiguration aspectConfiguration) {
+        this.aspectConfiguration = aspectConfiguration;
+    }
+
+    @Override
+    public AspectConfiguration getAspectConfiguration() {
+        return aspectConfiguration;
+    }
+
+    public void setComponentStatisticsId(ArtifactHolder holder) {
+        if (aspectConfiguration == null) {
+            aspectConfiguration = new AspectConfiguration(name);
+        }
+        String apiId = StatisticIdentityGenerator.getIdForComponent(name, ComponentType.TASK, holder);
+        aspectConfiguration.setUniqueId(apiId);
+        StatisticIdentityGenerator.reportingEndEvent(apiId, ComponentType.TASK, holder);
     }
 }
