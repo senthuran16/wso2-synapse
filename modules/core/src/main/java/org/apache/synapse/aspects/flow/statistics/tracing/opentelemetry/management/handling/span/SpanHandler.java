@@ -215,7 +215,11 @@ public class SpanHandler implements OpenTelemetrySpanHandler {
             // Extract span context from headers
             context = extract(headersMap);
         } else {
-            context = Context.current().with(parentSpan);
+            if (parentSpan != null) {
+                context = Context.current().with(parentSpan);
+            } else {
+                context = Context.current();
+            }
         }
         span = tracer.spanBuilder(statisticDataUnit.getComponentName()).setParent(context).startSpan();
 
