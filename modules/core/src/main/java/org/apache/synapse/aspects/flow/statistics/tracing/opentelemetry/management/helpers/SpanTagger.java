@@ -41,6 +41,7 @@ public class SpanTagger {
      * Sets tags to the span which is contained in the provided span wrapper, from information acquired from the
      * given basic statistic data unit.
      * @param spanWrapper               Span wrapper that contains the target span.
+     * @param synCtx Synapse message context
      */
     public static void setSpanTags(SpanWrapper spanWrapper, MessageContext synCtx) {
         StatisticsLog openStatisticsLog = new StatisticsLog(spanWrapper.getStatisticDataUnit());

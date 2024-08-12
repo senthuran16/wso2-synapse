@@ -214,12 +214,10 @@ public class SpanHandler implements OpenTelemetrySpanHandler {
         if (isOuterLevelSpan(statisticDataUnit, spanStore)) {
             // Extract span context from headers
             context = extract(headersMap);
+        } else if (parentSpan != null) {
+            context = Context.current().with(parentSpan);
         } else {
-            if (parentSpan != null) {
-                context = Context.current().with(parentSpan);
-            } else {
-                context = Context.current();
-            }
+            context = Context.current();
         }
         span = tracer.spanBuilder(statisticDataUnit.getComponentName()).setParent(context).startSpan();
 
@@ -372,6 +370,7 @@ public class SpanHandler implements OpenTelemetrySpanHandler {
     /**
      * Cleans up remaining unfinished continuation state sequences before ending the outer level span.
      * @param spanStore Span store object.
+     * @param synCtx Synapse message context
      */
     private void cleanupContinuationStateSequences(SpanStore spanStore, MessageContext synCtx) {
         if (!spanStore.getContinuationStateSequenceInfos().isEmpty()) {
@@ -388,6 +387,7 @@ public class SpanHandler implements OpenTelemetrySpanHandler {
      * Finishes a span, which has been added as a continuation state sequence.
      * @param continuationStateSequenceInfo Object that contains information about the continuation state sequence.
      * @param spanStore             Span store object.
+     * @param synCtx Synapse message context
      */
     private void finishSpanForContinuationStateSequence(ContinuationStateSequenceInfo continuationStateSequenceInfo,
                                                         SpanStore spanStore, MessageContext synCtx) {
