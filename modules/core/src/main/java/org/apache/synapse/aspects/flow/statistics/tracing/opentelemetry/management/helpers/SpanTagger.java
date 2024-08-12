@@ -19,11 +19,13 @@
 package org.apache.synapse.aspects.flow.statistics.tracing.opentelemetry.management.helpers;
 
 import io.opentelemetry.api.trace.Span;
+import org.apache.synapse.MessageContext;
 import org.apache.synapse.aspects.flow.statistics.data.raw.StatisticDataUnit;
 import org.apache.synapse.aspects.flow.statistics.data.raw.StatisticsLog;
 import org.apache.synapse.aspects.flow.statistics.tracing.opentelemetry.OpenTelemetryManagerHolder;
 import org.apache.synapse.aspects.flow.statistics.tracing.opentelemetry.management.TelemetryConstants;
 import org.apache.synapse.aspects.flow.statistics.tracing.opentelemetry.models.SpanWrapper;
+import org.apache.synapse.commons.CorrelationConstants;
 
 /**
  * Applies tags to Spans.
@@ -40,7 +42,7 @@ public class SpanTagger {
      * given basic statistic data unit.
      * @param spanWrapper               Span wrapper that contains the target span.
      */
-    public static void setSpanTags(SpanWrapper spanWrapper) {
+    public static void setSpanTags(SpanWrapper spanWrapper, MessageContext synCtx) {
         StatisticsLog openStatisticsLog = new StatisticsLog(spanWrapper.getStatisticDataUnit());
         Span span = spanWrapper.getSpan();
         if (OpenTelemetryManagerHolder.isCollectingPayloads() || OpenTelemetryManagerHolder.isCollectingProperties()) {
@@ -112,6 +114,10 @@ public class SpanTagger {
         if (openStatisticsLog.getEndpoint() != null) {
             span.setAttribute(TelemetryConstants.ENDPOINT_ATTRIBUTE_KEY,
                     String.valueOf(openStatisticsLog.getEndpoint().getJsonRepresentation()));
+        }
+        if (synCtx.getProperty(CorrelationConstants.CORRELATION_ID) != null) {
+            span.setAttribute(TelemetryConstants.CORRELATION_ID_ATTRIBUTE_KEY,
+                    synCtx.getProperty(CorrelationConstants.CORRELATION_ID).toString());
         }
     }
 }
