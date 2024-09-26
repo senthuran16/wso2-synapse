@@ -37,6 +37,7 @@ import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseLog;
 import org.apache.synapse.commons.json.Constants;
 import org.apache.synapse.commons.json.JsonUtil;
+import org.apache.synapse.config.SynapseConfigUtils;
 import org.apache.synapse.config.xml.SynapsePath;
 import org.apache.synapse.continuation.ContinuationStackManager;
 import org.apache.synapse.core.SynapseEnvironment;
@@ -236,9 +237,11 @@ public class ForEachMediator extends AbstractMediator implements ManagedLifecycl
                     iteratedMsgCtx = getIteratedMessage(synCtx, processingEnvelope,
                             (OMNode) element);
 
-                    //Removes the json stream property from the iterated context.
-                    ((Axis2MessageContext) iteratedMsgCtx).getAxis2MessageContext().
-                            removeProperty(Constants.ORG_APACHE_SYNAPSE_COMMONS_JSON_JSON_INPUT_STREAM);
+                    if (!SynapseConfigUtils.isPreserveJsonStreamWithXPath()) {
+                        //Removes the json stream property from the iterated context.
+                        ((Axis2MessageContext) iteratedMsgCtx).getAxis2MessageContext().
+                                removeProperty(Constants.ORG_APACHE_SYNAPSE_COMMONS_JSON_JSON_INPUT_STREAM);
+                    }
 
                 } catch (AxisFault axisFault) {
                     handleException("Error creating an iterated copy of the message", axisFault, synCtx);

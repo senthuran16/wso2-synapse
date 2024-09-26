@@ -283,6 +283,11 @@ public final class SynapseConstants {
         public static final String TIMEOUT_HANDLER_INTERVAL = "synapse.timeout_handler_interval";
 
         /**
+         * Property to preserve the JSON stream when using XPath.
+         */
+        public static final String PRESERVE_JSONSTREAM_WITH_XPATH = "synapse.preserve_json_stream_with_xpath";
+
+        /**
          * Interval for activating the timeout handler for cleaning up expired requests. Note that
          * there can be an error as large as the value of the interval. But for smaller intervals
          * and larger timeouts this error is negligilble.
