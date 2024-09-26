@@ -754,6 +754,13 @@ public class SynapseConfigUtils {
 
     }
 
+    public static boolean isPreserveJsonStreamWithXPath() {
+        Properties synapseProps = SynapsePropertiesLoader.loadSynapseProperties();
+        String preserveJsonStream = synapseProps.getProperty(SynapseConstants.PRESERVE_JSONSTREAM_WITH_XPATH
+                , "false");
+        return Boolean.parseBoolean(preserveJsonStream);
+    }
+
     public static long getTimeoutHandlerInterval() {
         return Long.parseLong(SynapsePropertiesLoader.getPropertyValue(
                 SynapseConstants.TIMEOUT_HANDLER_INTERVAL,
