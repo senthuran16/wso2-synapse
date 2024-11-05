@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
+import org.apache.synapse.endpoints.ProxyConfigs;
 import org.apache.synapse.endpoints.auth.AuthConstants;
 import org.apache.synapse.endpoints.auth.AuthException;
 import org.apache.synapse.endpoints.auth.AuthHandler;
@@ -46,7 +47,6 @@ import java.util.concurrent.ExecutionException;
 public abstract class OAuthHandler implements AuthHandler {
 
     private final String id;
-
     private final String tokenApiUrl;
     private final String clientId;
     private final String clientSecret;
@@ -58,9 +58,11 @@ public abstract class OAuthHandler implements AuthHandler {
     protected final int socketTimeout;
     private final TokenCacheProvider tokenCacheProvider;
 
+    private ProxyConfigs proxyConfigs;
+
     protected OAuthHandler(String tokenApiUrl, String clientId, String clientSecret, String authMode,
             int connectionTimeout, int connectionRequestTimeout, int socketTimeout,
-            TokenCacheProvider tokenCacheProvider) {
+            TokenCacheProvider tokenCacheProvider, ProxyConfigs proxyConfigs) {
 
         this.id = OAuthUtils.getRandomOAuthHandlerID();
         this.tokenApiUrl = tokenApiUrl;
@@ -71,6 +73,7 @@ public abstract class OAuthHandler implements AuthHandler {
         this.connectionRequestTimeout = connectionRequestTimeout;
         this.socketTimeout = socketTimeout;
         this.tokenCacheProvider = tokenCacheProvider;
+        this.proxyConfigs = proxyConfigs;
     }
 
     @Override
@@ -92,18 +95,19 @@ public abstract class OAuthHandler implements AuthHandler {
     private String getToken(final MessageContext messageContext) throws AuthException {
 
         // Check if the token is already cached
-        String token = tokenCacheProvider.getToken(id);
-        synchronized (id.intern()) {
+        String token = tokenCacheProvider.getToken(getId(messageContext));
+
+        synchronized (getId(messageContext).intern()) {
             if (StringUtils.isEmpty(token)) {
                 // If no token found, generate a new one
                 try {
                     token = OAuthClient.generateToken(OAuthUtils.resolveExpression(tokenApiUrl, messageContext),
                             buildTokenRequestPayload(messageContext), getEncodedCredentials(messageContext),
                             messageContext, getResolvedCustomHeadersMap(customHeadersMap, messageContext),
-                            connectionTimeout, connectionRequestTimeout, socketTimeout);
+                            connectionTimeout, connectionRequestTimeout, socketTimeout, proxyConfigs);
 
                     // Cache the newly generated token
-                    tokenCacheProvider.putToken(id, token);
+                    tokenCacheProvider.putToken(getId(messageContext), token);
                 } catch (IOException e) {
                     throw new AuthException("Error generating token", e);
                 }
@@ -139,11 +143,19 @@ public abstract class OAuthHandler implements AuthHandler {
     }
 
     /**
+     * Method to remove the token from the cache when the token is invalid.
+     */
+    public void removeTokenFromCache(MessageContext messageContext) throws AuthException {
+
+        tokenCacheProvider.removeToken(getId(messageContext));
+    }
+
+    /**
      * Method to remove the token from the cache when the endpoint is destroyed.
      */
-    public void removeTokenFromCache() {
+    public void removeTokensFromCache() {
 
-        tokenCacheProvider.removeToken(id);
+        tokenCacheProvider.removeTokens(id.concat("_"));
     }
 
     /**
@@ -204,6 +216,10 @@ public abstract class OAuthHandler implements AuthHandler {
                 clientSecret));
         oauthCredentials.addChild(OAuthUtils.createOMElementWithValue(omFactory, AuthConstants.TOKEN_API_URL,
                 tokenApiUrl));
+        if (proxyConfigs.isProxyEnabled()) {
+            OMElement proxyElement = OAuthUtils.createOMProxyConfigs(omFactory, proxyConfigs);
+            oauthCredentials.addChild(proxyElement);
+        }
         if (requestParametersMap != null && !requestParametersMap.isEmpty()) {
             OMElement requestParameters = OAuthUtils.createOMRequestParams(omFactory, requestParametersMap);
             oauthCredentials.addChild(requestParameters);
@@ -322,7 +338,7 @@ public abstract class OAuthHandler implements AuthHandler {
      * @param messageContext   Message Context of the request which will be used to resolve dynamic expressions
      * @return Map<String, String> Resolved custom headers
      */
-    private Map<String, String> getResolvedCustomHeadersMap(Map<String, String> customHeadersMap,
+    protected Map<String, String> getResolvedCustomHeadersMap(Map<String, String> customHeadersMap,
                                                             MessageContext messageContext) throws AuthException {
 
         Map<String, String> resolvedCustomHeadersMap = null;
@@ -348,4 +364,9 @@ public abstract class OAuthHandler implements AuthHandler {
         return socketTimeout;
     }
 
+    protected abstract int getHash(MessageContext messageContext) throws AuthException;
+
+    private String getId(MessageContext messageContext) throws AuthException {
+        return id.concat("_").concat(String.valueOf(getHash(messageContext)));
+    }
 }

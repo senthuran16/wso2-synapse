@@ -23,8 +23,11 @@ import org.apache.axiom.om.OMFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
+import org.apache.synapse.endpoints.ProxyConfigs;
 import org.apache.synapse.endpoints.auth.AuthConstants;
 import org.apache.synapse.endpoints.auth.AuthException;
+
+import java.util.Objects;
 
 /**
  * This class is used to handle Authorization code grant oauth.
@@ -35,10 +38,10 @@ public class AuthorizationCodeHandler extends OAuthHandler {
 
     public AuthorizationCodeHandler(String tokenApiUrl, String clientId, String clientSecret, String refreshToken,
             String authMode, int connectionTimeout, int connectionRequestTimeout, int socketTimeout,
-            TokenCacheProvider tokenCacheProvider) {
+            TokenCacheProvider tokenCacheProvider, ProxyConfigs proxyConfigs) {
 
         super(tokenApiUrl, clientId, clientSecret, authMode, connectionTimeout, connectionRequestTimeout, socketTimeout,
-                tokenCacheProvider);
+                tokenCacheProvider,proxyConfigs);
         this.refreshToken = refreshToken;
     }
 
@@ -72,6 +75,15 @@ public class AuthorizationCodeHandler extends OAuthHandler {
         authCode.addChild(
                 OAuthUtils.createOMElementWithValue(omFactory, AuthConstants.OAUTH_REFRESH_TOKEN, getRefreshToken()));
         return authCode;
+    }
+
+    @Override
+    protected int getHash(MessageContext messageContext) throws AuthException {
+        return Objects.hash(messageContext.getTo().getAddress(), OAuthUtils.resolveExpression(getTokenUrl(), messageContext),
+                OAuthUtils.resolveExpression(getClientId(), messageContext), OAuthUtils.resolveExpression(getClientSecret(),
+                        messageContext), OAuthUtils.resolveExpression(getRefreshToken(), messageContext),
+                getRequestParametersAsString(messageContext), getResolvedCustomHeadersMap(getCustomHeadersMap(),
+                        messageContext));
     }
 
     /**
