@@ -53,6 +53,7 @@ import org.apache.synapse.transport.passthru.config.PassThroughConfiguration;
 import org.apache.synapse.util.logging.LoggingUtils;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -443,12 +444,18 @@ public class API extends AbstractRequestProcessor implements ManagedLifecycle, A
                     msgCtx.getIncomingTransportName() + "://" + hostHeader);
         }
 
-        Set<Resource> acceptableResources = new LinkedHashSet<Resource>();
+        List<Resource> acceptableResourcesList = new LinkedList<>();
         for (Resource r : resources.values()) {
             if (isBound(r, synCtx) && r.canProcess(synCtx)) {
-                acceptableResources.add(r);
+                if (Arrays.asList(r.getMethods()).contains(RESTConstants.METHOD_OPTIONS)) {
+                    acceptableResourcesList.add(0, r);
+                } else {
+                    acceptableResourcesList.add(r);
+                }
             }
         }
+
+        Set<Resource> acceptableResources = new LinkedHashSet<Resource>(acceptableResourcesList);
 
         boolean processed = false;
         if (!acceptableResources.isEmpty()) {
