@@ -19,9 +19,11 @@
 package org.apache.synapse.transport.http.conn;
 
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 
 import javax.net.ssl.SSLEngine;
@@ -168,7 +170,16 @@ public class ClientSSLSetupHandler implements SSLSetupHandler {
         if (endpoint != null && !endpoint.isEmpty()) {
             try {
                 URI endpointURI = new URI(endpoint);
+                URL endpointURL;
                 address = endpointURI.getHost();
+                if (address == null) {
+                    try {
+                        endpointURL = new URL(endpoint);
+                    } catch (MalformedURLException e) {
+                        throw new IllegalArgumentException("Invalid endpointURL");
+                    }
+                    address = endpointURL.getHost();
+                }
             } catch (URISyntaxException e) {
                 throw new IllegalArgumentException("Invalid endpointURI: "+ endpoint, e);
             }
