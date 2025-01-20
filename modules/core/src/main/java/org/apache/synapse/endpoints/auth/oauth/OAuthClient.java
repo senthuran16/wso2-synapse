@@ -98,30 +98,34 @@ public class OAuthClient {
      * @throws IOException    In the event of a problem parsing the response from the server
      */
     public static String generateToken(String tokenApiUrl, String payload, String credentials,
-                                       MessageContext messageContext, Map<String, String> customHeaders,
-                                       int connectionTimeout, int connectionRequestTimeout, int socketTimeout) throws AuthException, IOException {
-        CloseableHttpClient httpClient = getSecureClient(tokenApiUrl, messageContext, connectionTimeout,
-                connectionRequestTimeout, socketTimeout);
+            MessageContext messageContext, Map<String, String> customHeaders, int connectionTimeout,
+            int connectionRequestTimeout, int socketTimeout) throws AuthException, IOException {
+
         if (log.isDebugEnabled()) {
             log.debug("Initializing token generation request: [token-endpoint] " + tokenApiUrl);
         }
 
-        HttpPost httpPost = new HttpPost(tokenApiUrl);
-        httpPost.setHeader(AuthConstants.CONTENT_TYPE_HEADER, AuthConstants.APPLICATION_X_WWW_FORM_URLENCODED);
-        if (!(customHeaders == null || customHeaders.isEmpty())) {
-            for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
-                httpPost.setHeader(entry.getKey(), entry.getValue());
-            }
-        }
-        if (credentials != null) {
-            httpPost.setHeader(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BASIC + credentials);
-        }
-        httpPost.setEntity(new StringEntity(payload));
+        try (CloseableHttpClient httpClient = getSecureClient(tokenApiUrl, messageContext, connectionTimeout,
+                connectionRequestTimeout, socketTimeout)) {
+            HttpPost httpPost = new HttpPost(tokenApiUrl);
+            httpPost.setHeader(AuthConstants.CONTENT_TYPE_HEADER, AuthConstants.APPLICATION_X_WWW_FORM_URLENCODED);
 
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            return extractToken(response);
-        } finally {
-            httpPost.releaseConnection();
+            if (!(customHeaders == null || customHeaders.isEmpty())) {
+                for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
+                    httpPost.setHeader(entry.getKey(), entry.getValue());
+                }
+            }
+
+            if (credentials != null) {
+                httpPost.setHeader(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BASIC + credentials);
+            }
+            httpPost.setEntity(new StringEntity(payload));
+
+            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                return extractToken(response);
+            } finally {
+                httpPost.releaseConnection();
+            }
         }
     }
 

@@ -56,9 +56,11 @@ public abstract class OAuthHandler implements AuthHandler {
     protected final int connectionTimeout;
     protected final int connectionRequestTimeout;
     protected final int socketTimeout;
+    private final TokenCacheProvider tokenCacheProvider;
 
     protected OAuthHandler(String tokenApiUrl, String clientId, String clientSecret, String authMode,
-                           int connectionTimeout, int connectionRequestTimeout, int socketTimeout) {
+            int connectionTimeout, int connectionRequestTimeout, int socketTimeout,
+            TokenCacheProvider tokenCacheProvider) {
 
         this.id = OAuthUtils.getRandomOAuthHandlerID();
         this.tokenApiUrl = tokenApiUrl;
@@ -68,6 +70,7 @@ public abstract class OAuthHandler implements AuthHandler {
         this.connectionTimeout = connectionTimeout;
         this.connectionRequestTimeout = connectionRequestTimeout;
         this.socketTimeout = socketTimeout;
+        this.tokenCacheProvider = tokenCacheProvider;
     }
 
     @Override
@@ -88,18 +91,24 @@ public abstract class OAuthHandler implements AuthHandler {
      */
     private String getToken(final MessageContext messageContext) throws AuthException {
 
-        try {
-            return TokenCache.getInstance().getToken(id, new Callable<String>() {
-                @Override
-                public String call() throws AuthException, IOException {
-                    return OAuthClient.generateToken(OAuthUtils.resolveExpression(tokenApiUrl, messageContext),
+        // Check if the token is already cached
+        String token = tokenCacheProvider.getToken(id);
+        synchronized (id.intern()) {
+            if (StringUtils.isEmpty(token)) {
+                // If no token found, generate a new one
+                try {
+                    token = OAuthClient.generateToken(OAuthUtils.resolveExpression(tokenApiUrl, messageContext),
                             buildTokenRequestPayload(messageContext), getEncodedCredentials(messageContext),
-                            messageContext, getResolvedCustomHeadersMap(customHeadersMap, messageContext), connectionTimeout,
-                            connectionRequestTimeout, socketTimeout);
+                            messageContext, getResolvedCustomHeadersMap(customHeadersMap, messageContext),
+                            connectionTimeout, connectionRequestTimeout, socketTimeout);
+
+                    // Cache the newly generated token
+                    tokenCacheProvider.putToken(id, token);
+                } catch (IOException e) {
+                    throw new AuthException("Error generating token", e);
                 }
-            });
-        } catch (ExecutionException e) {
-            throw new AuthException(e.getCause());
+            }
+            return token;
         }
     }
 
@@ -134,7 +143,7 @@ public abstract class OAuthHandler implements AuthHandler {
      */
     public void removeTokenFromCache() {
 
-        TokenCache.getInstance().removeToken(id);
+        tokenCacheProvider.removeToken(id);
     }
 
     /**

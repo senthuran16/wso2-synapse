@@ -301,9 +301,8 @@ public class OAuthUtilsTest {
         @Parameterized.Parameters
         public static Collection provideDataForRetryOnOauthFailureTests() throws AxisFault {
 
-            OAuthHandler oAuthHandler =
-                    new AuthorizationCodeHandler("oauth_server_url", "client_id", "client_secret",
-                            "refresh_token", "header", -1, -1, -1);
+            OAuthHandler oAuthHandler = new AuthorizationCodeHandler("oauth_server_url", "client_id", "client_secret",
+                    "refresh_token", "header", -1, -1, -1, TokenCache.getInstance());
 
             OAuthConfiguredHTTPEndpoint httpEndpoint = new OAuthConfiguredHTTPEndpoint(oAuthHandler);
 
