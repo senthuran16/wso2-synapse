@@ -45,4 +45,11 @@ public interface TokenCacheProvider {
      * @param id the unique identifier for the token to be removed
      */
     void removeToken(String id);
+
+    /**
+     * Removes all tokens associated with the specified OAuth handler from the cache.
+     *
+     * @param oauthHandlerId the identifier of the OAuth handler whose tokens are to be removed
+     */
+    void removeTokens(String oauthHandlerId);
 }

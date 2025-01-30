@@ -25,8 +25,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.config.SynapsePropertiesLoader;
 import org.apache.synapse.endpoints.auth.AuthConstants;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.synapse.endpoints.auth.AuthConstants.TOKEN_CACHE_TIMEOUT_PROPERTY;
@@ -75,6 +73,7 @@ public class TokenCache implements TokenCacheProvider {
      * @param id    the unique identifier for the token
      * @param token the token to be cached
      */
+    @Override
     public void putToken(String id, String token) {
 
         tokenMap.put(id, token);
@@ -86,19 +85,30 @@ public class TokenCache implements TokenCacheProvider {
      * @param id the unique identifier for the token
      * @return the cached token, or {@code null} if not found
      */
+    @Override
     public String getToken(String id) {
 
         return tokenMap.getIfPresent(id);
     }
 
     /**
-     * This method is called to remove the token from the cache when the endpoint is destroyed
+     * This method is called to remove the token from the cache when the token is invalid
      *
      * @param id id of the endpoint
      */
+    @Override
     public void removeToken(String id) {
 
         tokenMap.invalidate(id);
     }
 
+    /**
+     * This method is called to remove the tokens from the cache when the endpoint is destroyed
+     *
+     * @param oauthHandlerId id of the OAuth handler bounded to the endpoint
+     */
+    @Override
+    public void removeTokens(String oauthHandlerId) {
+        tokenMap.asMap().entrySet().removeIf(entry -> entry.getKey().startsWith(oauthHandlerId));
+    }
 }
