@@ -23,8 +23,11 @@ import org.apache.axiom.om.OMFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.synapse.MessageContext;
 import org.apache.synapse.SynapseConstants;
+import org.apache.synapse.endpoints.ProxyConfigs;
 import org.apache.synapse.endpoints.auth.AuthConstants;
 import org.apache.synapse.endpoints.auth.AuthException;
+
+import java.util.Objects;
 
 /**
  * This class is used to handle Client Credentials grant oauth.
@@ -32,9 +35,11 @@ import org.apache.synapse.endpoints.auth.AuthException;
 public class ClientCredentialsHandler extends OAuthHandler {
 
     public ClientCredentialsHandler(String tokenApiUrl, String clientId, String clientSecret, String authMode,
-                                    int connectionTimeout, int connectionRequestTimeout, int socketTimeout) {
+            int connectionTimeout, int connectionRequestTimeout, int socketTimeout,
+            TokenCacheProvider tokenCacheProvider, ProxyConfigs proxyConfigs) {
 
-        super(tokenApiUrl, clientId, clientSecret, authMode, connectionTimeout, connectionRequestTimeout, socketTimeout);
+        super(tokenApiUrl, clientId, clientSecret, authMode, connectionTimeout, connectionRequestTimeout, socketTimeout,
+                tokenCacheProvider, proxyConfigs);
     }
 
     @Override
@@ -59,5 +64,13 @@ public class ClientCredentialsHandler extends OAuthHandler {
     protected OMElement serializeSpecificOAuthConfigs(OMFactory omFactory) {
 
         return omFactory.createOMElement(AuthConstants.CLIENT_CREDENTIALS, SynapseConstants.SYNAPSE_OMNAMESPACE);
+    }
+
+    @Override
+    protected int getHash(MessageContext messageContext) throws AuthException {
+        return Objects.hash(messageContext.getTo().getAddress(), OAuthUtils.resolveExpression(getTokenUrl(), messageContext),
+                OAuthUtils.resolveExpression(getClientId(), messageContext), OAuthUtils.resolveExpression(getClientSecret(),
+                        messageContext), getRequestParametersAsString(messageContext),
+                getResolvedCustomHeadersMap(getCustomHeadersMap(), messageContext));
     }
 }
